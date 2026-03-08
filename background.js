@@ -1,4 +1,4 @@
-// BackgroundSearch v2.0.0
+// BackgroundSearch v2.1.0
 // Forces new tabs to open in the background + custom context menu search.
 
 const ENGINES = [
@@ -134,28 +134,19 @@ async function updateIcon() {
 
   const active = settings.bgTabsEnabled || settings.searchEnabled;
   const color = active ? "#89b4fa" : "#585b70";
-  const bgColor = active ? "#1e1e2e" : "#313244";
 
-  ctx.fillStyle = bgColor;
-  ctx.beginPath();
-  ctx.roundRect(8, 28, 112, 92, 8);
-  ctx.fill();
-
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.roundRect(12, 32, 40, 16, [6, 6, 0, 0]);
-  ctx.fill();
-
-  // Search magnifying glass
+  // Magnifying glass circle (transparent background)
   ctx.strokeStyle = color;
-  ctx.lineWidth = 9;
+  ctx.lineWidth = 14;
   ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.arc(72, 72, 22, 0, Math.PI * 2);
+  ctx.arc(52, 52, 36, 0, Math.PI * 2);
   ctx.stroke();
+
+  // Handle
   ctx.beginPath();
-  ctx.moveTo(88, 88);
-  ctx.lineTo(105, 105);
+  ctx.moveTo(78, 78);
+  ctx.lineTo(114, 114);
   ctx.stroke();
 
   const sizes = [16, 32, 48, 128];

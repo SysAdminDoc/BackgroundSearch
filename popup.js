@@ -1,4 +1,4 @@
-// BackgroundSearch v2.0.0 — Popup Settings
+// BackgroundSearch v2.1.0 — Popup Settings
 
 const ENGINES = [
   { id: "google",       name: "Google",         url: "https://www.google.com/search?q=%s",                  color: "#4285f4" },
