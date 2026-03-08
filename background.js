@@ -1,71 +1,140 @@
-// Force Background Tab v1.0.0
-// Forces all new tabs to open in the background without stealing focus.
+// BackgroundSearch v2.0.0
+// Forces new tabs to open in the background + custom context menu search.
 
-let enabled = true;
+const ENGINES = [
+  { id: "google",       name: "Google",         url: "https://www.google.com/search?q=%s" },
+  { id: "bing",         name: "Bing",           url: "https://www.bing.com/search?q=%s" },
+  { id: "duckduckgo",   name: "DuckDuckGo",     url: "https://duckduckgo.com/?q=%s" },
+  { id: "yahoo",        name: "Yahoo",          url: "https://search.yahoo.com/search?p=%s" },
+  { id: "brave",        name: "Brave Search",   url: "https://search.brave.com/search?q=%s" },
+  { id: "ecosia",       name: "Ecosia",         url: "https://www.ecosia.org/search?q=%s" },
+  { id: "startpage",    name: "Startpage",      url: "https://www.startpage.com/sp/search?query=%s" },
+  { id: "yandex",       name: "Yandex",         url: "https://yandex.com/search/?text=%s" },
+  { id: "baidu",        name: "Baidu",          url: "https://www.baidu.com/s?wd=%s" },
+  { id: "perplexity",   name: "Perplexity",     url: "https://www.perplexity.ai/search?q=%s" },
+  { id: "wolframalpha", name: "Wolfram Alpha",  url: "https://www.wolframalpha.com/input/?i=%s" },
+  { id: "wikipedia",    name: "Wikipedia",      url: "https://en.wikipedia.org/wiki/Special:Search?search=%s" },
+  { id: "youtube",      name: "YouTube",        url: "https://www.youtube.com/results?search_query=%s" },
+  { id: "reddit",       name: "Reddit",         url: "https://www.reddit.com/search/?q=%s" },
+  { id: "github",       name: "GitHub",         url: "https://github.com/search?q=%s" },
+  { id: "stackoverflow",name: "Stack Overflow", url: "https://stackoverflow.com/search?q=%s" },
+  { id: "amazon",       name: "Amazon",         url: "https://www.amazon.com/s?k=%s" },
+  { id: "ebay",         name: "eBay",           url: "https://www.ebay.com/sch/i.html?_nkw=%s" },
+  { id: "twitch",       name: "Twitch",         url: "https://www.twitch.tv/search?term=%s" },
+  { id: "imdb",         name: "IMDb",           url: "https://www.imdb.com/find/?q=%s" },
+];
+
+const DEFAULTS = {
+  bgTabsEnabled: true,
+  searchEnabled: true,
+  enabledEngines: ["google"],
+};
+
+let settings = { ...DEFAULTS };
 let lastActiveTabId = null;
-let lastActiveWindowId = null;
 let recentlyCreatedTabs = new Set();
 
-// Track the currently active tab at all times
+// ── Background Tab Logic ──
+
 chrome.tabs.onActivated.addListener((activeInfo) => {
   if (recentlyCreatedTabs.has(activeInfo.tabId)) {
-    // This activation was caused by a new tab — snap back
     recentlyCreatedTabs.delete(activeInfo.tabId);
-    if (enabled && lastActiveTabId !== null) {
+    if (settings.bgTabsEnabled && lastActiveTabId !== null) {
       chrome.tabs.update(lastActiveTabId, { active: true }).catch(() => {});
     }
   } else {
-    // Normal user-driven tab switch — update tracking
     lastActiveTabId = activeInfo.tabId;
-    lastActiveWindowId = activeInfo.windowId;
   }
 });
 
-// When a new tab is created, mark it so onActivated can handle the snap-back
 chrome.tabs.onCreated.addListener((tab) => {
-  if (enabled && tab.active) {
+  if (settings.bgTabsEnabled && tab.active) {
     recentlyCreatedTabs.add(tab.id);
-    // Fallback: clear from set after a short delay in case onActivated doesn't fire
     setTimeout(() => recentlyCreatedTabs.delete(tab.id), 500);
   }
 });
 
-// Clean up tracking when tabs close
 chrome.tabs.onRemoved.addListener((tabId) => {
   recentlyCreatedTabs.delete(tabId);
-  if (tabId === lastActiveTabId) {
-    lastActiveTabId = null;
+  if (tabId === lastActiveTabId) lastActiveTabId = null;
+});
+
+// ── Context Menu Search ──
+
+async function buildContextMenus() {
+  await chrome.contextMenus.removeAll();
+
+  if (!settings.searchEnabled) return;
+
+  const enabled = ENGINES.filter((e) => settings.enabledEngines.includes(e.id));
+  if (enabled.length === 0) return;
+
+  if (enabled.length === 1) {
+    // Single engine — no submenu needed
+    chrome.contextMenus.create({
+      id: `search_${enabled[0].id}`,
+      title: `Search ${enabled[0].name} for "%s"`,
+      contexts: ["selection"],
+    });
+  } else {
+    // Parent menu
+    chrome.contextMenus.create({
+      id: "bs_parent",
+      title: `BackgroundSearch "%s"`,
+      contexts: ["selection"],
+    });
+
+    for (const engine of enabled) {
+      chrome.contextMenus.create({
+        id: `search_${engine.id}`,
+        parentId: "bs_parent",
+        title: engine.name,
+        contexts: ["selection"],
+      });
+    }
+  }
+}
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  const engineId = info.menuItemId.replace("search_", "");
+  const engine = ENGINES.find((e) => e.id === engineId);
+  if (!engine || !info.selectionText) return;
+
+  const searchUrl = engine.url.replace("%s", encodeURIComponent(info.selectionText));
+
+  // Open in background tab (next to current tab)
+  chrome.tabs.create({
+    url: searchUrl,
+    active: false,
+    index: tab ? tab.index + 1 : undefined,
+    openerTabId: tab ? tab.id : undefined,
+  });
+});
+
+// ── Settings Sync ──
+
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.type === "settingsChanged") {
+    loadSettings();
   }
 });
 
-// Toggle on/off via toolbar icon click
-chrome.action.onClicked.addListener(async () => {
-  enabled = !enabled;
-  await updateIcon();
-});
-
-// Initialize: get the current active tab and set icon
-chrome.runtime.onStartup.addListener(init);
-chrome.runtime.onInstalled.addListener(init);
-
-async function init() {
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab) {
-      lastActiveTabId = tab.id;
-      lastActiveWindowId = tab.windowId;
-    }
-  } catch {}
+async function loadSettings() {
+  const data = await chrome.storage.sync.get(DEFAULTS);
+  settings = data;
+  await buildContextMenus();
   await updateIcon();
 }
+
+// ── Icon Drawing ──
 
 async function updateIcon() {
   const canvas = new OffscreenCanvas(128, 128);
   const ctx = canvas.getContext("2d");
 
-  // Draw tab shape
-  const color = enabled ? "#89b4fa" : "#585b70";
-  const bgColor = enabled ? "#1e1e2e" : "#313244";
+  const active = settings.bgTabsEnabled || settings.searchEnabled;
+  const color = active ? "#89b4fa" : "#585b70";
+  const bgColor = active ? "#1e1e2e" : "#313244";
 
   ctx.fillStyle = bgColor;
   ctx.beginPath();
@@ -77,37 +146,42 @@ async function updateIcon() {
   ctx.roundRect(12, 32, 40, 16, [6, 6, 0, 0]);
   ctx.fill();
 
-  // Arrow pointing down-left (background indicator)
+  // Search magnifying glass
   ctx.strokeStyle = color;
-  ctx.lineWidth = enabled ? 10 : 8;
+  ctx.lineWidth = 9;
   ctx.lineCap = "round";
-  ctx.lineJoin = "round";
   ctx.beginPath();
-  ctx.moveTo(95, 50);
-  ctx.lineTo(70, 95);
-  ctx.lineTo(45, 70);
+  ctx.arc(72, 72, 22, 0, Math.PI * 2);
   ctx.stroke();
-
-  // Arrowhead
-  ctx.fillStyle = color;
   ctx.beginPath();
-  ctx.moveTo(70, 95);
-  ctx.lineTo(55, 82);
-  ctx.lineTo(68, 78);
-  ctx.closePath();
-  ctx.fill();
+  ctx.moveTo(88, 88);
+  ctx.lineTo(105, 105);
+  ctx.stroke();
 
   const sizes = [16, 32, 48, 128];
   const imageData = {};
   for (const size of sizes) {
-    const sCanvas = new OffscreenCanvas(size, size);
-    const sCtx = sCanvas.getContext("2d");
-    sCtx.drawImage(canvas, 0, 0, size, size);
-    imageData[size] = sCtx.getImageData(0, 0, size, size);
+    const s = new OffscreenCanvas(size, size);
+    const sc = s.getContext("2d");
+    sc.drawImage(canvas, 0, 0, size, size);
+    imageData[size] = sc.getImageData(0, 0, size, size);
   }
 
   await chrome.action.setIcon({ imageData });
   await chrome.action.setTitle({
-    title: `Force Background Tab: ${enabled ? "ON" : "OFF"}`,
+    title: `BackgroundSearch${active ? "" : " (disabled)"}`,
   });
 }
+
+// ── Init ──
+
+async function init() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab) lastActiveTabId = tab.id;
+  } catch {}
+  await loadSettings();
+}
+
+chrome.runtime.onStartup.addListener(init);
+chrome.runtime.onInstalled.addListener(init);
