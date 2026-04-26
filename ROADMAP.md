@@ -8,25 +8,25 @@ Chrome MV3 extension that forces new tabs to open in the background and adds rig
 - **Per-site rules** — "always foreground" / "always background" / "inherit Chrome default" allowlist/denylist
 - **Keyboard modifier override** — hold Shift to invert the current force-background default
 - **Rule matching patterns** — glob / regex / tld-suffix, not just exact host
-- **Tab placement control** — "next to active" vs "end of bar" vs "group with opener"
+- ✅ **Tab placement control** — "next to active" vs "end of bar" *(v2.2.0)*
 - **Middle-click capture** — optionally normalize middle-click behavior across sites that override it
 
 ### Context menu
+- ✅ **Multi-engine fan-out** — "Search all enabled" opens each engine in its own background tab *(v2.2.0)*
 - **Custom engine editor** — URL template with `%s` and `%encoded`, icon picker, preview
 - **Engine groups / folders** in the right-click menu (e.g., "Dev", "Shopping", "Research")
 - **Per-engine new-window / new-tab / current-tab** target
-- **Multi-engine fan-out** — "Search all enabled" opens each engine in its own background tab
 - **Import/export engines** as JSON (share sets between machines)
 - **Keyword triggers** — type `yt foo` in the Omnibox to search YouTube
 
 ### Sync / Settings
-- `chrome.storage.sync` for engine list + toggles (cross-device)
-- Export full config bundle for backup
+- `chrome.storage.sync` for engine list + toggles (cross-device) ✅ *(already implemented)*
+- ✅ **Export full config bundle** for backup *(v2.2.0)*
 - Reset-to-defaults per-section rather than whole-popup
 
 ### UI / UX
 - Drag-to-reorder engines
-- Search the engine list live
+- Search the engine list live ✅ *(already implemented)*
 - Favicon auto-fetch for custom engines (with local fallback sprite)
 - Dark / Light / System theme follow
 - Shadow DOM for popup-injected UI to avoid site-theme bleed (if ever added)
@@ -62,14 +62,14 @@ Chrome MV3 extension that forces new tabs to open in the background and adds rig
 - **b9chris/YelpSearch** — https://github.com/b9chris/YelpSearch — Starter template for "search a thing" context-menu extensions.
 
 ### Features to Borrow
+- ✅ **Tab-placement choice** (rathinosk/ContextMenuSearch) — "next to current" vs "end of tab list" setting *(v2.2.0)*
+- ✅ **60+ predefined engine catalog** (rathinosk) — expanded to 29 engines; further additions welcome *(v2.2.0)*
+- ✅ **"Search all enabled engines" multi-open** (Pitmairen) — context menu item fans out across all enabled engines *(v2.2.0)*
 - **Per-engine background-tab toggle** (Pitmairen/selection-search) — instead of one global "force background" flag, each enabled engine carries its own `openInBackground: bool`. Lets GitHub always open in foreground while Reddit stays background.
-- **Tab-placement choice** (rathinosk/ContextMenuSearch) — "next to current" vs "end of tab list" setting; surfaces as two radio buttons in the popup.
-- **60+ predefined engine catalog** (rathinosk) — ship a larger curated catalog as `engines.json` (archive.org, Stack Overflow, MDN, arXiv, PubMed, Wikipedia per-language, HN Algolia, Sci-Hub); users enable what they want without hand-adding URLs.
 - **Quick Menu popup at selection** (ssborbis/ContextSearch-web-ext) — radial/pill menu that floats near the text selection, engines one click away without the right-click detour. Optional toggle.
 - **Sidebar / panel view with engine folders** (ssborbis/ContextSearch-web-ext) — power-user view for engines grouped into folders (Dev / Shopping / Research / Privacy) with drag-reorder.
 - **Hotkey binding per engine** (ssborbis/ContextSearch-web-ext) — Ctrl+Shift+G for Google, Ctrl+Shift+W for Wikipedia, firing against current selection.
 - **Custom URL placeholder beyond `%s`** (fiahfy/context-menu-search) — support `%url`, `%title`, `%host`, `%selection_lower`, `%selection_url_encoded` for advanced engines.
-- **"Search all enabled engines" multi-open** (Pitmairen) — open N background tabs at once for a broad sweep (useful for OSINT workflows).
 
 ### Patterns & Architectures Worth Studying
 - **Declarative `engines.json` with update URL** (rathinosk) — engines defined as data, shipped as a JSON file the extension refreshes, so users contribute via PR rather than code edits.
