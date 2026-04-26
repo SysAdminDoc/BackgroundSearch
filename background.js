@@ -1,4 +1,4 @@
-// BackgroundSearch v2.2.0
+// BackgroundSearch v2.3.0
 // Forces new tabs to open in the background + custom context menu search.
 
 const ENGINES = [
@@ -38,7 +38,9 @@ const DEFAULTS = {
   searchEnabled: true,
   searchAll: false,
   tabPlacement: "next",
+  omniboxEngineId: "",
   enabledEngines: ["google"],
+  fgEngines: [],
   customEngines: [],
 };
 
@@ -129,16 +131,17 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (!info.selectionText) return;
 
   const query = encodeURIComponent(info.selectionText);
-  const openTab = (url) => {
-    const opts = { url, active: false, openerTabId: tab?.id };
-    if (settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
+  const openTab = (url, engineId) => {
+    const isFg = (settings.fgEngines || []).includes(engineId);
+    const opts = { url, active: isFg, openerTabId: tab?.id };
+    if (!isFg && settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
     chrome.tabs.create(opts);
   };
 
   if (info.menuItemId === "search_all") {
     const enabled = getAllEngines().filter((e) => settings.enabledEngines.includes(e.id));
     for (const engine of enabled) {
-      openTab(engine.url.replace("%s", query));
+      openTab(engine.url.replace("%s", query), engine.id);
     }
     return;
   }
@@ -147,7 +150,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   const engine = getAllEngines().find((e) => e.id === engineId);
   if (!engine) return;
 
-  openTab(engine.url.replace("%s", query));
+  openTab(engine.url.replace("%s", query), engine.id);
 });
 
 // ── Settings Sync ──
@@ -202,6 +205,41 @@ async function updateIcon() {
     title: `BackgroundSearch${active ? "" : " (disabled)"}`,
   });
 }
+
+// ── Omnibox ──
+
+function escXml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function getOmniboxEngine() {
+  const allEngines = getAllEngines();
+  const enabled = allEngines.filter((e) => settings.enabledEngines.includes(e.id));
+  return enabled.find((e) => e.id === settings.omniboxEngineId) || enabled[0] || null;
+}
+
+chrome.omnibox.onInputChanged.addListener((text, suggest) => {
+  const engine = getOmniboxEngine();
+  if (!engine) return;
+  chrome.omnibox.setDefaultSuggestion({
+    description: `Search <dim>${escXml(engine.name)}</dim> for <match>${escXml(text)}</match>`,
+  });
+});
+
+chrome.omnibox.onInputEntered.addListener(async (text, disposition) => {
+  const engine = getOmniboxEngine();
+  if (!engine || !text.trim()) return;
+  const url = engine.url.replace("%s", encodeURIComponent(text.trim()));
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const opts = { url, active: false };
+  if (settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
+  chrome.tabs.create(opts);
+});
 
 // ── Init ──
 
