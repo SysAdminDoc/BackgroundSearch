@@ -3,23 +3,27 @@
   "name": "BackgroundSearch",
   "version": "2.1.0",
   "description": "Forces new tabs to open in the background and adds custom search engines to the right-click context menu.",
-  "permissions": ["tabs", "contextMenus", "storage"],
+  "permissions": [
+    "tabs",
+    "contextMenus",
+    "storage"
+  ],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icons/icon16.png",
-      "32": "icons/icon32.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
+      "16": "icons/16.png",
+      "32": "icons/32.png",
+      "48": "icons/48.png",
+      "128": "icons/128.png"
     }
   },
   "icons": {
-    "16": "icons/icon16.png",
-    "32": "icons/icon32.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
+    "16": "icons/16.png",
+    "32": "icons/32.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
   }
 }
