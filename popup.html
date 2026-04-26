@@ -227,11 +227,131 @@
     transition: all 0.15s;
   }
 
-  .btn-sm:hover {
-    background: var(--surface0);
-    color: var(--text);
-    border-color: var(--surface2);
+  .option-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--mantle);
+    margin-bottom: 6px;
+    border: 1px solid var(--surface0);
   }
+
+  .option-row:last-child { margin-bottom: 0; }
+
+  .option-label {
+    font-size: 12px;
+    color: var(--subtext1);
+  }
+
+  .seg-control {
+    display: flex;
+    gap: 2px;
+    background: var(--surface0);
+    border-radius: 6px;
+    padding: 2px;
+  }
+
+  .seg-btn {
+    padding: 3px 9px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--subtext0);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .seg-btn.active {
+    background: var(--surface1);
+    color: var(--text);
+  }
+
+  .delete-btn {
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--red);
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+    margin-right: 4px;
+  }
+
+  .delete-btn:hover { opacity: 1; }
+
+  .add-engine-btn {
+    width: 100%;
+    margin-top: 6px;
+    padding: 7px;
+    border: 1px dashed var(--surface1);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--overlay0);
+    font-size: 11px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+
+  .add-engine-btn:hover {
+    border-color: var(--blue);
+    color: var(--blue);
+    background: rgba(137, 180, 250, 0.05);
+  }
+
+  .add-engine-form {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 10px;
+    background: var(--mantle);
+    border-radius: 8px;
+    border: 1px solid var(--surface0);
+  }
+
+  .add-engine-form.open { display: flex; }
+
+  .add-engine-form input {
+    width: 100%;
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--surface0);
+    background: var(--crust);
+    color: var(--text);
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .add-engine-form input::placeholder { color: var(--surface2); }
+  .add-engine-form input:focus { border-color: var(--blue); }
+
+  .btn-primary {
+    padding: 7px;
+    border: none;
+    border-radius: 6px;
+    background: var(--blue);
+    color: var(--crust);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .btn-primary:hover { opacity: 0.85; }
 </style>
 </head>
 <body>
@@ -243,7 +363,7 @@
     </div>
     <div class="header-text">
       <h1>BackgroundSearch</h1>
-      <span>v2.1.0</span>
+      <span>v2.2.0</span>
     </div>
   </div>
 
@@ -269,6 +389,23 @@
         <div class="toggle-thumb"></div>
       </label>
     </div>
+    <div class="toggle-row">
+      <div class="toggle-label">
+        <span>Search All Engines</span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="searchAll">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+    <div class="option-row">
+      <span class="option-label">Result tab placement</span>
+      <div class="seg-control" id="tabPlacementCtrl">
+        <button class="seg-btn active" data-val="next">Next to current</button>
+        <button class="seg-btn" data-val="end">End of bar</button>
+      </div>
+    </div>
   </div>
 
   <div class="section" id="enginesSection">
@@ -276,11 +413,20 @@
     <div class="btn-row">
       <button class="btn-sm" id="enableAll">Enable All</button>
       <button class="btn-sm" id="disableAll">Disable All</button>
+      <button class="btn-sm" id="exportConfig">↑ Export</button>
+      <button class="btn-sm" id="importConfig">↓ Import</button>
     </div>
+    <input type="file" id="importFile" accept=".json" style="display:none">
     <div class="search-filter">
       <input type="text" id="filterInput" placeholder="Filter engines...">
     </div>
     <div class="engine-list" id="engineList"></div>
+    <button class="add-engine-btn" id="toggleAddEngine">+ Add custom engine</button>
+    <div class="add-engine-form" id="addEngineForm">
+      <input type="text" id="newEngineName" placeholder="Engine name (e.g. Kagi)">
+      <input type="text" id="newEngineUrl" placeholder="https://example.com/search?q=%s">
+      <button class="btn-primary" id="addEngineBtn">Add Engine</button>
+    </div>
   </div>
 
   <script src="popup.js"></script>
