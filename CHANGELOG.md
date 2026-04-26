@@ -2,6 +2,14 @@
 
 All notable changes to BackgroundSearch will be documented in this file.
 
+## [v2.3.0] - 2026-04-26
+
+- Added: Omnibox keyword triggers — type `bs <query>` in the address bar to search with a selectable engine
+- Added: Per-engine foreground/background toggle — FG/BG badge next to each engine to control tab activation
+- Added: Reset to defaults per section — dedicated Reset buttons in Features and Search Engines sections
+- Fixed: Omnibox respects tab placement setting for background tab opening
+- Fixed: Per-engine FG setting properly reflected in context menu search and search all operations
+
 ## [v2.2.0] - 2026-04-26
 
 - Added: 9 new built-in engines — Kagi, Hacker News, MDN Web Docs, Google Images, Google Maps, Twitter/X, npm, arXiv, PubMed (29 total)

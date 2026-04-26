@@ -13,16 +13,17 @@ Chrome MV3 extension that forces new tabs to open in the background and adds rig
 
 ### Context menu
 - ✅ **Multi-engine fan-out** — "Search all enabled" opens each engine in its own background tab *(v2.2.0)*
-- **Custom engine editor** — URL template with `%s` and `%encoded`, icon picker, preview
+- ✅ **Custom engine editor** — URL template with `%s`, add/delete, auto-enabled *(v2.2.0)*
 - **Engine groups / folders** in the right-click menu (e.g., "Dev", "Shopping", "Research")
 - **Per-engine new-window / new-tab / current-tab** target
-- **Import/export engines** as JSON (share sets between machines)
-- **Keyword triggers** — type `yt foo` in the Omnibox to search YouTube
+- ✅ **Import/export engines** as JSON (share sets between machines) *(v2.2.0)*
+- ✅ **Keyword triggers** — type `bs <query>` in the Omnibox to search with a selected engine *(v2.3.0)*
 
 ### Sync / Settings
 - `chrome.storage.sync` for engine list + toggles (cross-device) ✅ *(already implemented)*
 - ✅ **Export full config bundle** for backup *(v2.2.0)*
-- Reset-to-defaults per-section rather than whole-popup
+- ✅ **Reset-to-defaults per-section** rather than whole-popup *(v2.3.0)*
+- ✅ **Per-engine foreground/background toggle** — each engine can be set to open in FG or BG *(v2.3.0)*
 
 ### UI / UX
 - Drag-to-reorder engines
@@ -65,7 +66,7 @@ Chrome MV3 extension that forces new tabs to open in the background and adds rig
 - ✅ **Tab-placement choice** (rathinosk/ContextMenuSearch) — "next to current" vs "end of tab list" setting *(v2.2.0)*
 - ✅ **60+ predefined engine catalog** (rathinosk) — expanded to 29 engines; further additions welcome *(v2.2.0)*
 - ✅ **"Search all enabled engines" multi-open** (Pitmairen) — context menu item fans out across all enabled engines *(v2.2.0)*
-- **Per-engine background-tab toggle** (Pitmairen/selection-search) — instead of one global "force background" flag, each enabled engine carries its own `openInBackground: bool`. Lets GitHub always open in foreground while Reddit stays background.
+- ✅ **Per-engine background-tab toggle** (Pitmairen/selection-search) — each engine has FG/BG toggle in popup *(v2.3.0)*
 - **Quick Menu popup at selection** (ssborbis/ContextSearch-web-ext) — radial/pill menu that floats near the text selection, engines one click away without the right-click detour. Optional toggle.
 - **Sidebar / panel view with engine folders** (ssborbis/ContextSearch-web-ext) — power-user view for engines grouped into folders (Dev / Shopping / Research / Privacy) with drag-reorder.
 - **Hotkey binding per engine** (ssborbis/ContextSearch-web-ext) — Ctrl+Shift+G for Google, Ctrl+Shift+W for Wikipedia, firing against current selection.

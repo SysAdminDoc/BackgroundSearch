@@ -1,4 +1,4 @@
-// BackgroundSearch v2.2.0 — Popup Settings
+// BackgroundSearch v2.3.0 — Popup Settings
 
 const ENGINES = [
   { id: "google",       name: "Google",         url: "https://www.google.com/search?q=%s",                  color: "#4285f4" },
@@ -37,7 +37,9 @@ const DEFAULTS = {
   searchEnabled: true,
   searchAll: false,
   tabPlacement: "next",
+  omniboxEngineId: "",
   enabledEngines: ["google"],
+  fgEngines: [],
   customEngines: [],
 };
 
@@ -83,12 +85,15 @@ function renderEngines(filter = "") {
     const name = escHtml(engine.name);
     const checked = settings.enabledEngines.includes(engine.id) ? "checked" : "";
     const isCustom = engine.id.startsWith("custom_");
+    const isFg = (settings.fgEngines || []).includes(engine.id);
+    const badgeClass = isFg ? "bg-badge fg" : "bg-badge";
 
     row.innerHTML = `
       <div class="toggle-label">
         <div class="icon" style="background:${engine.color}">${initial}</div>
         <span>${name}</span>
       </div>
+      <button class="${badgeClass}" title="Toggle foreground" data-engine="${engine.id}">${isFg ? "FG" : "BG"}</button>
       ${isCustom ? `<button class="delete-btn" title="Remove engine" aria-label="Remove ${name}">×</button>` : ""}
       <label class="toggle-switch">
         <input type="checkbox" data-engine="${engine.id}" ${checked}>
@@ -96,6 +101,8 @@ function renderEngines(filter = "") {
         <div class="toggle-thumb"></div>
       </label>
     `;
+
+    row.querySelector(".bg-badge").addEventListener("click", () => toggleFgEngine(engine.id));
 
     if (isCustom) {
       row.querySelector(".delete-btn").addEventListener("click", () => deleteCustomEngine(engine.id));
@@ -229,6 +236,40 @@ document.getElementById("newEngineName").addEventListener("input", (e) => {
 document.getElementById("newEngineUrl").addEventListener("input", (e) => {
   e.target.style.borderColor = "";
 });
+
+// ── FG/BG Toggle ──
+
+async function toggleFgEngine(id) {
+  const fgEngines = settings.fgEngines || [];
+  if (fgEngines.includes(id)) {
+    settings.fgEngines = fgEngines.filter((e) => e !== id);
+  } else {
+    settings.fgEngines = [...fgEngines, id];
+  }
+  await save();
+  renderEngines();
+}
+
+// ── Reset ──
+
+async function resetSection(section) {
+  if (section === "features") {
+    settings.bgTabsEnabled = DEFAULTS.bgTabsEnabled;
+    settings.searchEnabled = DEFAULTS.searchEnabled;
+    settings.searchAll = DEFAULTS.searchAll;
+    settings.tabPlacement = DEFAULTS.tabPlacement;
+    settings.omniboxEngineId = DEFAULTS.omniboxEngineId;
+  } else if (section === "engines") {
+    settings.enabledEngines = [...DEFAULTS.enabledEngines];
+    settings.fgEngines = [];
+    settings.customEngines = [];
+  }
+  await save();
+  location.reload();
+}
+
+document.getElementById("resetFeatures").addEventListener("click", () => resetSection("features"));
+document.getElementById("resetEngines").addEventListener("click", () => resetSection("engines"));
 
 // ── Export / Import ──
 

@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
   "name": "BackgroundSearch",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Forces new tabs to open in the background and adds custom search engines to the right-click context menu.",
+  "omnibox": { "keyword": "bs" },
   "permissions": [
     "tabs",
     "contextMenus",
