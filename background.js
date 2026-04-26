@@ -1,4 +1,4 @@
-// BackgroundSearch v2.1.0
+// BackgroundSearch v2.2.0
 // Forces new tabs to open in the background + custom context menu search.
 
 const ENGINES = [
@@ -22,12 +22,24 @@ const ENGINES = [
   { id: "ebay",         name: "eBay",           url: "https://www.ebay.com/sch/i.html?_nkw=%s" },
   { id: "twitch",       name: "Twitch",         url: "https://www.twitch.tv/search?term=%s" },
   { id: "imdb",         name: "IMDb",           url: "https://www.imdb.com/find/?q=%s" },
+  { id: "kagi",         name: "Kagi",           url: "https://kagi.com/search?q=%s" },
+  { id: "hackernews",   name: "Hacker News",    url: "https://hn.algolia.com/?query=%s" },
+  { id: "mdn",          name: "MDN Web Docs",   url: "https://developer.mozilla.org/en-US/search?q=%s" },
+  { id: "googleimages", name: "Google Images",  url: "https://www.google.com/search?tbm=isch&q=%s" },
+  { id: "googlemaps",   name: "Google Maps",    url: "https://www.google.com/maps/search/%s" },
+  { id: "twitter",      name: "Twitter / X",    url: "https://twitter.com/search?q=%s" },
+  { id: "npm",          name: "npm",            url: "https://www.npmjs.com/search?q=%s" },
+  { id: "arxiv",        name: "arXiv",          url: "https://arxiv.org/search/?query=%s&searchtype=all" },
+  { id: "pubmed",       name: "PubMed",         url: "https://pubmed.ncbi.nlm.nih.gov/?term=%s" },
 ];
 
 const DEFAULTS = {
   bgTabsEnabled: true,
   searchEnabled: true,
+  searchAll: false,
+  tabPlacement: "next",
   enabledEngines: ["google"],
+  customEngines: [],
 };
 
 let settings = { ...DEFAULTS };
@@ -61,28 +73,46 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 
 // ── Context Menu Search ──
 
+function getAllEngines() {
+  return [...ENGINES, ...(settings.customEngines || [])];
+}
+
 async function buildContextMenus() {
   await chrome.contextMenus.removeAll();
 
   if (!settings.searchEnabled) return;
 
-  const enabled = ENGINES.filter((e) => settings.enabledEngines.includes(e.id));
+  const allEngines = getAllEngines();
+  const enabled = allEngines.filter((e) => settings.enabledEngines.includes(e.id));
   if (enabled.length === 0) return;
 
   if (enabled.length === 1) {
-    // Single engine — no submenu needed
     chrome.contextMenus.create({
       id: `search_${enabled[0].id}`,
       title: `Search ${enabled[0].name} for "%s"`,
       contexts: ["selection"],
     });
   } else {
-    // Parent menu
     chrome.contextMenus.create({
       id: "bs_parent",
       title: `BackgroundSearch "%s"`,
       contexts: ["selection"],
     });
+
+    if (settings.searchAll) {
+      chrome.contextMenus.create({
+        id: "search_all",
+        parentId: "bs_parent",
+        title: `Search all ${enabled.length} engines`,
+        contexts: ["selection"],
+      });
+      chrome.contextMenus.create({
+        id: "bs_sep",
+        parentId: "bs_parent",
+        type: "separator",
+        contexts: ["selection"],
+      });
+    }
 
     for (const engine of enabled) {
       chrome.contextMenus.create({
@@ -96,19 +126,28 @@ async function buildContextMenus() {
 }
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (!info.selectionText) return;
+
+  const query = encodeURIComponent(info.selectionText);
+  const openTab = (url) => {
+    const opts = { url, active: false, openerTabId: tab?.id };
+    if (settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
+    chrome.tabs.create(opts);
+  };
+
+  if (info.menuItemId === "search_all") {
+    const enabled = getAllEngines().filter((e) => settings.enabledEngines.includes(e.id));
+    for (const engine of enabled) {
+      openTab(engine.url.replace("%s", query));
+    }
+    return;
+  }
+
   const engineId = info.menuItemId.replace("search_", "");
-  const engine = ENGINES.find((e) => e.id === engineId);
-  if (!engine || !info.selectionText) return;
+  const engine = getAllEngines().find((e) => e.id === engineId);
+  if (!engine) return;
 
-  const searchUrl = engine.url.replace("%s", encodeURIComponent(info.selectionText));
-
-  // Open in background tab (next to current tab)
-  chrome.tabs.create({
-    url: searchUrl,
-    active: false,
-    index: tab ? tab.index + 1 : undefined,
-    openerTabId: tab ? tab.id : undefined,
-  });
+  openTab(engine.url.replace("%s", query));
 });
 
 // ── Settings Sync ──
