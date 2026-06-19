@@ -6,7 +6,7 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  :root {
+  :root, [data-theme="dark"] {
     --crust: #11111b;
     --mantle: #181825;
     --base: #1e1e2e;
@@ -25,6 +25,50 @@
     --yellow: #f9e2af;
     --teal: #94e2d5;
     --lavender: #b4befe;
+  }
+
+  [data-theme="light"] {
+    --crust: #dce0e8;
+    --mantle: #e6e9ef;
+    --base: #eff1f5;
+    --surface0: #ccd0da;
+    --surface1: #bcc0cc;
+    --surface2: #acb0be;
+    --overlay0: #9ca0b0;
+    --text: #4c4f69;
+    --subtext0: #6c6f85;
+    --subtext1: #5c5f77;
+    --blue: #1e66f5;
+    --green: #40a02b;
+    --red: #d20f39;
+    --mauve: #8839ef;
+    --peach: #fe640b;
+    --yellow: #df8e1d;
+    --teal: #179299;
+    --lavender: #7287fd;
+  }
+
+  @media (prefers-color-scheme: light) {
+    [data-theme="system"] {
+      --crust: #dce0e8;
+      --mantle: #e6e9ef;
+      --base: #eff1f5;
+      --surface0: #ccd0da;
+      --surface1: #bcc0cc;
+      --surface2: #acb0be;
+      --overlay0: #9ca0b0;
+      --text: #4c4f69;
+      --subtext0: #6c6f85;
+      --subtext1: #5c5f77;
+      --blue: #1e66f5;
+      --green: #40a02b;
+      --red: #d20f39;
+      --mauve: #8839ef;
+      --peach: #fe640b;
+      --yellow: #df8e1d;
+      --teal: #179299;
+      --lavender: #7287fd;
+    }
   }
 
   body {
@@ -398,6 +442,11 @@
     color: var(--peach);
   }
 
+  .bg-badge.win {
+    background: rgba(203, 166, 247, 0.15);
+    color: var(--mauve);
+  }
+
   .bg-badge:hover { opacity: 0.75; }
 
   .option-hint {
@@ -483,6 +532,62 @@
     margin-top: 4px;
     line-height: 1.4;
   }
+
+  .rule-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: var(--mantle);
+    margin-bottom: 4px;
+  }
+
+  .rule-pattern {
+    font-size: 11px;
+    font-family: monospace;
+    color: var(--text);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .rule-type-badge {
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: var(--surface0);
+    color: var(--overlay0);
+    flex-shrink: 0;
+  }
+
+  .rule-action-badge {
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 5px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .rule-action-badge.fg {
+    background: rgba(250, 179, 135, 0.15);
+    color: var(--peach);
+  }
+
+  .rule-action-badge.bg {
+    background: rgba(137, 180, 250, 0.15);
+    color: var(--blue);
+  }
+
+  .rule-action-badge.default {
+    background: var(--surface0);
+    color: var(--overlay0);
+  }
 </style>
 </head>
 <body>
@@ -546,6 +651,40 @@
         <button class="seg-btn" data-val="end">End of bar</button>
       </div>
     </div>
+    <div class="option-row">
+      <span class="option-label">Theme</span>
+      <div class="seg-control" id="themeCtrl">
+        <button class="seg-btn" data-val="dark">Dark</button>
+        <button class="seg-btn" data-val="light">Light</button>
+        <button class="seg-btn active" data-val="system">System</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title-row">
+      <span class="section-title">Per-Site Rules</span>
+    </div>
+    <div id="siteRuleList"></div>
+    <div class="add-engine-form open" id="addSiteRuleForm" style="display:flex">
+      <div style="display:flex;gap:4px;width:100%">
+        <input type="text" id="newRulePattern" placeholder="e.g. *.example.com" style="flex:1">
+        <select id="newRuleType" class="group-select" style="max-width:60px">
+          <option value="glob">Glob</option>
+          <option value="exact">Exact</option>
+          <option value="regex">Regex</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:4px;width:100%">
+        <select id="newRuleAction" class="group-select" style="max-width:none;flex:1">
+          <option value="fg">Always Foreground</option>
+          <option value="bg">Always Background</option>
+          <option value="default">Inherit Default</option>
+        </select>
+        <button class="btn-primary" id="addSiteRuleBtn" style="padding:5px 10px;font-size:11px">Add</button>
+      </div>
+    </div>
+    <div class="hint-text">Override force-background behavior for specific sites. Glob patterns: * matches any characters, ? matches one character.</div>
   </div>
 
   <div class="section">

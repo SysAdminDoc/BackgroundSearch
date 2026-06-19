@@ -44,6 +44,8 @@ const DEFAULTS = {
   customEngines: [],
   engineGroups: [],       // [{id, name}]
   engineGroupMap: {},     // {engineId: groupId}
+  windowEngines: [],      // engines that open in a new window
+  siteRules: [],          // [{pattern, type:"exact"|"glob"|"regex", action:"fg"|"bg"|"default"}]
 };
 
 let settings = { ...DEFAULTS };
@@ -51,27 +53,63 @@ let lastActiveTabId = null;
 let recentlyCreatedTabs = new Set();
 let shiftHeld = false; // Shift modifier state from content script
 
+// ── Site Rule Matching ──
+
+function matchSiteRule(url) {
+  if (!url) return null;
+  const rules = settings.siteRules || [];
+  let hostname;
+  try { hostname = new URL(url).hostname; } catch { return null; }
+
+  for (const rule of rules) {
+    let matched = false;
+    if (rule.type === "exact") {
+      matched = hostname === rule.pattern;
+    } else if (rule.type === "glob") {
+      // Convert glob to regex: * -> .*, ? -> .
+      const escaped = rule.pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+      const re = new RegExp("^" + escaped.replace(/\*/g, ".*").replace(/\?/g, ".") + "$", "i");
+      matched = re.test(hostname);
+    } else if (rule.type === "regex") {
+      try { matched = new RegExp(rule.pattern, "i").test(hostname); } catch {}
+    }
+    if (matched) return rule.action; // "fg", "bg", or "default"
+  }
+  return null;
+}
+
 // ── Background Tab Logic ──
 
-function shouldForceBackground() {
-  // Shift inverts the default: if bgTabs is on, Shift lets the tab come forward;
-  // if bgTabs is off, Shift forces it to background.
+function shouldForceBackground(url) {
+  const ruleAction = matchSiteRule(url);
+  if (ruleAction === "fg") return false;  // always foreground for this site
+  if (ruleAction === "bg") return true;   // always background for this site
+  // "default" or no match: use global toggle + shift modifier
   return settings.bgTabsEnabled !== shiftHeld;
 }
 
 chrome.tabs.onActivated.addListener((activeInfo) => {
   if (recentlyCreatedTabs.has(activeInfo.tabId)) {
     recentlyCreatedTabs.delete(activeInfo.tabId);
-    if (shouldForceBackground() && lastActiveTabId !== null) {
-      chrome.tabs.update(lastActiveTabId, { active: true }).catch(() => {});
-    }
+    // Get the tab's URL for site-rule matching
+    chrome.tabs.get(activeInfo.tabId).then((tab) => {
+      if (shouldForceBackground(tab?.pendingUrl || tab?.url) && lastActiveTabId !== null) {
+        chrome.tabs.update(lastActiveTabId, { active: true }).catch(() => {});
+      }
+    }).catch(() => {
+      // Fallback: apply global rule without URL
+      if (shouldForceBackground() && lastActiveTabId !== null) {
+        chrome.tabs.update(lastActiveTabId, { active: true }).catch(() => {});
+      }
+    });
   } else {
     lastActiveTabId = activeInfo.tabId;
   }
 });
 
 chrome.tabs.onCreated.addListener((tab) => {
-  if (shouldForceBackground() && tab.active) {
+  const url = tab.pendingUrl || tab.url;
+  if (shouldForceBackground(url) && tab.active) {
     recentlyCreatedTabs.add(tab.id);
     setTimeout(() => recentlyCreatedTabs.delete(tab.id), 500);
   }
@@ -208,6 +246,11 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
   const query = encodeURIComponent(info.selectionText);
   const openTab = (url, engineId) => {
+    const isWindow = (settings.windowEngines || []).includes(engineId);
+    if (isWindow) {
+      chrome.windows.create({ url, focused: true });
+      return;
+    }
     const isFg = (settings.fgEngines || []).includes(engineId);
     const opts = { url, active: isFg, openerTabId: tab?.id };
     if (!isFg && settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;

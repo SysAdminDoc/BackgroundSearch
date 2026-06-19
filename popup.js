@@ -43,9 +43,16 @@ const DEFAULTS = {
   customEngines: [],
   engineGroups: [],
   engineGroupMap: {},
+  windowEngines: [],
+  themeMode: "system",    // "dark" | "light" | "system"
+  siteRules: [],          // [{pattern, type, action}]
 };
 
 let settings = {};
+
+function applyTheme(mode) {
+  document.documentElement.dataset.theme = mode || "system";
+}
 
 async function load() {
   const data = await chrome.storage.sync.get(DEFAULTS);
@@ -58,6 +65,12 @@ async function load() {
   const tabPlacement = settings.tabPlacement || "next";
   document.querySelectorAll("#tabPlacementCtrl .seg-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.val === tabPlacement);
+  });
+
+  const themeMode = settings.themeMode || "system";
+  applyTheme(themeMode);
+  document.querySelectorAll("#themeCtrl .seg-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.val === themeMode);
   });
 
   renderEngines();
@@ -90,7 +103,9 @@ function renderEngines(filter = "") {
     const checked = settings.enabledEngines.includes(engine.id) ? "checked" : "";
     const isCustom = engine.id.startsWith("custom_");
     const isFg = (settings.fgEngines || []).includes(engine.id);
-    const badgeClass = isFg ? "bg-badge fg" : "bg-badge";
+    const isWin = (settings.windowEngines || []).includes(engine.id);
+    const targetLabel = isWin ? "WIN" : isFg ? "FG" : "BG";
+    const badgeClass = isWin ? "bg-badge win" : isFg ? "bg-badge fg" : "bg-badge";
 
     // Group selector (only shown when groups exist)
     let groupHtml = "";
@@ -110,7 +125,7 @@ function renderEngines(filter = "") {
         <span>${name}</span>
       </div>
       ${groupHtml}
-      <button class="${badgeClass}" title="Toggle foreground" data-engine="${engine.id}">${isFg ? "FG" : "BG"}</button>
+      <button class="${badgeClass}" title="Cycle: BG / FG / Window" data-engine="${engine.id}">${targetLabel}</button>
       ${isCustom ? `<button class="delete-btn" title="Remove engine" aria-label="Remove ${name}">×</button>` : ""}
       <label class="toggle-switch">
         <input type="checkbox" data-engine="${engine.id}" ${checked}>
@@ -119,7 +134,7 @@ function renderEngines(filter = "") {
       </label>
     `;
 
-    row.querySelector(".bg-badge").addEventListener("click", () => toggleFgEngine(engine.id));
+    row.querySelector(".bg-badge").addEventListener("click", () => cycleEngineTarget(engine.id));
 
     if (isCustom) {
       row.querySelector(".delete-btn").addEventListener("click", () => deleteCustomEngine(engine.id));
@@ -197,6 +212,18 @@ document.querySelectorAll("#tabPlacementCtrl .seg-btn").forEach((btn) => {
   });
 });
 
+// ── Theme ──
+
+document.querySelectorAll("#themeCtrl .seg-btn").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    document.querySelectorAll("#themeCtrl .seg-btn").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    settings.themeMode = btn.dataset.val;
+    applyTheme(settings.themeMode);
+    await save();
+  });
+});
+
 // ── Custom Engines ──
 
 function randomEngineColor() {
@@ -259,18 +286,87 @@ document.getElementById("newEngineUrl").addEventListener("input", (e) => {
   e.target.style.borderColor = "";
 });
 
-// ── FG/BG Toggle ──
+// ── Engine Target Cycle (BG -> FG -> WIN -> BG) ──
 
-async function toggleFgEngine(id) {
+async function cycleEngineTarget(id) {
   const fgEngines = settings.fgEngines || [];
-  if (fgEngines.includes(id)) {
+  const winEngines = settings.windowEngines || [];
+  const isFg = fgEngines.includes(id);
+  const isWin = winEngines.includes(id);
+
+  if (isWin) {
+    // WIN -> BG
+    settings.windowEngines = winEngines.filter((e) => e !== id);
+  } else if (isFg) {
+    // FG -> WIN
     settings.fgEngines = fgEngines.filter((e) => e !== id);
+    settings.windowEngines = [...winEngines, id];
   } else {
+    // BG -> FG
     settings.fgEngines = [...fgEngines, id];
   }
   await save();
-  renderEngines();
+  renderEngines(document.getElementById("filterInput").value);
 }
+
+// ── Site Rules ──
+
+function renderSiteRules() {
+  const list = document.getElementById("siteRuleList");
+  if (!list) return;
+  list.innerHTML = "";
+  const rules = settings.siteRules || [];
+  for (let i = 0; i < rules.length; i++) {
+    const rule = rules[i];
+    const row = document.createElement("div");
+    row.className = "rule-row";
+    const actionLabel = rule.action === "fg" ? "FG" : rule.action === "bg" ? "BG" : "DEF";
+    const actionClass = rule.action === "fg" ? "fg" : rule.action === "bg" ? "bg" : "default";
+    row.innerHTML = `
+      <span class="rule-pattern" title="${escHtml(rule.pattern)}">${escHtml(rule.pattern)}</span>
+      <span class="rule-type-badge">${escHtml(rule.type)}</span>
+      <span class="rule-action-badge ${actionClass}">${actionLabel}</span>
+      <button class="delete-btn" title="Remove rule" aria-label="Remove rule">×</button>
+    `;
+    const idx = i;
+    row.querySelector(".delete-btn").addEventListener("click", () => deleteSiteRule(idx));
+    list.appendChild(row);
+  }
+}
+
+async function addSiteRule() {
+  const patternInput = document.getElementById("newRulePattern");
+  const typeSelect = document.getElementById("newRuleType");
+  const actionSelect = document.getElementById("newRuleAction");
+  const pattern = patternInput.value.trim();
+  if (!pattern) { patternInput.style.borderColor = "var(--red)"; return; }
+  patternInput.style.borderColor = "";
+
+  if (!settings.siteRules) settings.siteRules = [];
+  settings.siteRules.push({
+    pattern,
+    type: typeSelect.value,
+    action: actionSelect.value,
+  });
+  await save();
+  patternInput.value = "";
+  renderSiteRules();
+}
+
+async function deleteSiteRule(index) {
+  if (!settings.siteRules) return;
+  settings.siteRules.splice(index, 1);
+  await save();
+  renderSiteRules();
+}
+
+document.getElementById("addSiteRuleBtn")?.addEventListener("click", addSiteRule);
+document.getElementById("newRulePattern")?.addEventListener("input", (e) => {
+  e.target.style.borderColor = "";
+});
+document.getElementById("newRulePattern")?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") addSiteRule();
+});
 
 // ── Engine Groups ──
 
@@ -337,9 +433,12 @@ async function resetSection(section) {
     settings.searchAll = DEFAULTS.searchAll;
     settings.tabPlacement = DEFAULTS.tabPlacement;
     settings.omniboxEngineId = DEFAULTS.omniboxEngineId;
+    settings.themeMode = DEFAULTS.themeMode;
+    settings.siteRules = [];
   } else if (section === "engines") {
     settings.enabledEngines = [...DEFAULTS.enabledEngines];
     settings.fgEngines = [];
+    settings.windowEngines = [];
     settings.customEngines = [];
     settings.engineGroups = [];
     settings.engineGroupMap = {};
@@ -390,6 +489,12 @@ document.getElementById("importFile").addEventListener("change", async (e) => {
       btn.classList.toggle("active", btn.dataset.val === tp);
     });
 
+    const tm = settings.themeMode || "system";
+    applyTheme(tm);
+    document.querySelectorAll("#themeCtrl .seg-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.val === tm);
+    });
+
     const on = settings.searchEnabled;
     document.getElementById("enginesSection").style.opacity = on ? "1" : "0.4";
     document.getElementById("enginesSection").style.pointerEvents = on ? "auto" : "none";
@@ -416,4 +521,5 @@ load().then(() => {
     document.getElementById("enginesSection").style.pointerEvents = "none";
   }
   renderGroups();
+  renderSiteRules();
 });
