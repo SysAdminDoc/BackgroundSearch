@@ -1,4 +1,4 @@
-// BackgroundSearch v2.3.0 — Popup Settings
+// BackgroundSearch v2.4.0 — Popup Settings
 
 const ENGINES = [
   { id: "google",       name: "Google",         url: "https://www.google.com/search?q=%s",                  color: "#4285f4" },
@@ -41,6 +41,8 @@ const DEFAULTS = {
   enabledEngines: ["google"],
   fgEngines: [],
   customEngines: [],
+  engineGroups: [],
+  engineGroupMap: {},
 };
 
 let settings = {};
@@ -74,6 +76,8 @@ function renderEngines(filter = "") {
   list.innerHTML = "";
   const lower = filter.toLowerCase();
   const allEngines = [...ENGINES, ...(settings.customEngines || [])];
+  const groups = settings.engineGroups || [];
+  const groupMap = settings.engineGroupMap || {};
 
   for (const engine of allEngines) {
     if (lower && !engine.name.toLowerCase().includes(lower)) continue;
@@ -88,11 +92,24 @@ function renderEngines(filter = "") {
     const isFg = (settings.fgEngines || []).includes(engine.id);
     const badgeClass = isFg ? "bg-badge fg" : "bg-badge";
 
+    // Group selector (only shown when groups exist)
+    let groupHtml = "";
+    if (groups.length > 0) {
+      const curGroup = groupMap[engine.id] || "";
+      let opts = `<option value="">—</option>`;
+      for (const g of groups) {
+        const sel = g.id === curGroup ? "selected" : "";
+        opts += `<option value="${escHtml(g.id)}" ${sel}>${escHtml(g.name)}</option>`;
+      }
+      groupHtml = `<select class="group-select" data-engine="${engine.id}" title="Assign group">${opts}</select>`;
+    }
+
     row.innerHTML = `
       <div class="toggle-label">
         <div class="icon" style="background:${engine.color}">${initial}</div>
         <span>${name}</span>
       </div>
+      ${groupHtml}
       <button class="${badgeClass}" title="Toggle foreground" data-engine="${engine.id}">${isFg ? "FG" : "BG"}</button>
       ${isCustom ? `<button class="delete-btn" title="Remove engine" aria-label="Remove ${name}">×</button>` : ""}
       <label class="toggle-switch">
@@ -106,6 +123,11 @@ function renderEngines(filter = "") {
 
     if (isCustom) {
       row.querySelector(".delete-btn").addEventListener("click", () => deleteCustomEngine(engine.id));
+    }
+
+    const groupSelect = row.querySelector(".group-select");
+    if (groupSelect) {
+      groupSelect.addEventListener("change", (e) => assignEngineGroup(engine.id, e.target.value));
     }
 
     row.querySelector("input").addEventListener("change", (e) => {
@@ -250,6 +272,62 @@ async function toggleFgEngine(id) {
   renderEngines();
 }
 
+// ── Engine Groups ──
+
+async function assignEngineGroup(engineId, groupId) {
+  if (!settings.engineGroupMap) settings.engineGroupMap = {};
+  if (groupId) {
+    settings.engineGroupMap[engineId] = groupId;
+  } else {
+    delete settings.engineGroupMap[engineId];
+  }
+  await save();
+}
+
+function renderGroups() {
+  const list = document.getElementById("groupList");
+  if (!list) return;
+  list.innerHTML = "";
+  const groups = settings.engineGroups || [];
+  for (const group of groups) {
+    const row = document.createElement("div");
+    row.className = "group-row";
+    row.innerHTML = `
+      <span class="group-name">${escHtml(group.name)}</span>
+      <button class="delete-btn" title="Remove group" aria-label="Remove ${escHtml(group.name)}">×</button>
+    `;
+    row.querySelector(".delete-btn").addEventListener("click", () => deleteGroup(group.id));
+    list.appendChild(row);
+  }
+}
+
+async function addGroup() {
+  const input = document.getElementById("newGroupName");
+  const name = input.value.trim();
+  if (!name) { input.style.borderColor = "var(--red)"; return; }
+  input.style.borderColor = "";
+
+  if (!settings.engineGroups) settings.engineGroups = [];
+  settings.engineGroups.push({ id: `grp_${Date.now()}`, name });
+  await save();
+  input.value = "";
+  renderGroups();
+  renderEngines(document.getElementById("filterInput").value);
+}
+
+async function deleteGroup(groupId) {
+  settings.engineGroups = (settings.engineGroups || []).filter((g) => g.id !== groupId);
+  // Remove group assignments for deleted group
+  const map = settings.engineGroupMap || {};
+  for (const key of Object.keys(map)) {
+    if (map[key] === groupId) delete map[key];
+  }
+  settings.engineGroupMap = map;
+  await save();
+  renderGroups();
+  renderEngines(document.getElementById("filterInput").value);
+}
+
 // ── Reset ──
 
 async function resetSection(section) {
@@ -263,6 +341,8 @@ async function resetSection(section) {
     settings.enabledEngines = [...DEFAULTS.enabledEngines];
     settings.fgEngines = [];
     settings.customEngines = [];
+    settings.engineGroups = [];
+    settings.engineGroupMap = {};
   }
   await save();
   location.reload();
@@ -320,9 +400,20 @@ document.getElementById("importFile").addEventListener("change", async (e) => {
   e.target.value = "";
 });
 
+// ── Group UI listeners ──
+
+document.getElementById("addGroupBtn")?.addEventListener("click", addGroup);
+document.getElementById("newGroupName")?.addEventListener("input", (e) => {
+  e.target.style.borderColor = "";
+});
+document.getElementById("newGroupName")?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") addGroup();
+});
+
 load().then(() => {
   if (!settings.searchEnabled) {
     document.getElementById("enginesSection").style.opacity = "0.4";
     document.getElementById("enginesSection").style.pointerEvents = "none";
   }
+  renderGroups();
 });

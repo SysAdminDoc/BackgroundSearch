@@ -1,15 +1,17 @@
 # BackgroundSearch
 
-![Version](https://img.shields.io/badge/version-v2.3.0-blue) ![License](https://img.shields.io/badge/license-MIT-green) ![Platform](https://img.shields.io/badge/platform-Chrome%20Extension-lightgrey)
+![Version](https://img.shields.io/badge/version-v2.4.0-blue) ![License](https://img.shields.io/badge/license-MIT-green) ![Platform](https://img.shields.io/badge/platform-Chrome%20Extension-lightgrey)
 
 Chrome extension that forces new tabs to open in the background and adds custom search engines to the right-click context menu.
 
 ## Features
 
 - **Force Background Tabs** — New tabs open behind your current tab instead of switching to them
+- **Shift Modifier Override** — Hold Shift while clicking to invert the current background/foreground default
 - **Context Menu Search** — Highlight text, right-click, and search with any enabled engine. Results open in a background tab
 - **29 Search Engine Presets** — Google, Bing, DuckDuckGo, YouTube, Reddit, GitHub, Kagi, MDN, Hacker News, arXiv, npm, and more
 - **Search All Engines** — One right-click item fans out across every enabled engine simultaneously
+- **Engine Groups** — Organize engines into named groups (Dev, Shopping, Research) that appear as sub-menus in the right-click menu
 - **Tab Placement Control** — Open search results next to your current tab or at the end of the tab bar
 - **Custom Engine Editor** — Add your own engines with any `%s` URL template; remove them any time
 - **Export / Import Config** — Backup and restore your full settings as a JSON file

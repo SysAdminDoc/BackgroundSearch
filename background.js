@@ -1,4 +1,4 @@
-// BackgroundSearch v2.3.0
+// BackgroundSearch v2.4.0
 // Forces new tabs to open in the background + custom context menu search.
 
 const ENGINES = [
@@ -42,18 +42,27 @@ const DEFAULTS = {
   enabledEngines: ["google"],
   fgEngines: [],
   customEngines: [],
+  engineGroups: [],       // [{id, name}]
+  engineGroupMap: {},     // {engineId: groupId}
 };
 
 let settings = { ...DEFAULTS };
 let lastActiveTabId = null;
 let recentlyCreatedTabs = new Set();
+let shiftHeld = false; // Shift modifier state from content script
 
 // ── Background Tab Logic ──
+
+function shouldForceBackground() {
+  // Shift inverts the default: if bgTabs is on, Shift lets the tab come forward;
+  // if bgTabs is off, Shift forces it to background.
+  return settings.bgTabsEnabled !== shiftHeld;
+}
 
 chrome.tabs.onActivated.addListener((activeInfo) => {
   if (recentlyCreatedTabs.has(activeInfo.tabId)) {
     recentlyCreatedTabs.delete(activeInfo.tabId);
-    if (settings.bgTabsEnabled && lastActiveTabId !== null) {
+    if (shouldForceBackground() && lastActiveTabId !== null) {
       chrome.tabs.update(lastActiveTabId, { active: true }).catch(() => {});
     }
   } else {
@@ -62,7 +71,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
 });
 
 chrome.tabs.onCreated.addListener((tab) => {
-  if (settings.bgTabsEnabled && tab.active) {
+  if (shouldForceBackground() && tab.active) {
     recentlyCreatedTabs.add(tab.id);
     setTimeout(() => recentlyCreatedTabs.delete(tab.id), 500);
   }
@@ -79,13 +88,32 @@ function getAllEngines() {
   return [...ENGINES, ...(settings.customEngines || [])];
 }
 
+// Config snapshot for skipping redundant rebuilds
+let currentMenuConfig = null;
+
 async function buildContextMenus() {
+  const allEngines = getAllEngines();
+  const enabled = settings.searchEnabled
+    ? allEngines.filter((e) => settings.enabledEngines.includes(e.id))
+    : [];
+  const groupMap = settings.engineGroupMap || {};
+  const groups = settings.engineGroups || [];
+
+  // Build a config snapshot to detect whether anything actually changed
+  const newConfig = JSON.stringify({
+    searchEnabled: settings.searchEnabled,
+    searchAll: settings.searchAll,
+    enabledIds: enabled.map((e) => e.id),
+    enabledNames: enabled.map((e) => e.name),
+    groups,
+    groupMap,
+  });
+
+  if (newConfig === currentMenuConfig) return;
+  currentMenuConfig = newConfig;
+
   await chrome.contextMenus.removeAll();
 
-  if (!settings.searchEnabled) return;
-
-  const allEngines = getAllEngines();
-  const enabled = allEngines.filter((e) => settings.enabledEngines.includes(e.id));
   if (enabled.length === 0) return;
 
   if (enabled.length === 1) {
@@ -94,36 +122,84 @@ async function buildContextMenus() {
       title: `Search ${enabled[0].name} for "%s"`,
       contexts: ["selection"],
     });
-  } else {
+    return;
+  }
+
+  // Multiple engines — use parent menu
+  chrome.contextMenus.create({
+    id: "bs_parent",
+    title: `BackgroundSearch "%s"`,
+    contexts: ["selection"],
+  });
+
+  if (settings.searchAll) {
     chrome.contextMenus.create({
-      id: "bs_parent",
-      title: `BackgroundSearch "%s"`,
+      id: "search_all",
+      parentId: "bs_parent",
+      title: `Search all ${enabled.length} engines`,
       contexts: ["selection"],
     });
+    chrome.contextMenus.create({
+      id: "bs_sep",
+      parentId: "bs_parent",
+      type: "separator",
+      contexts: ["selection"],
+    });
+  }
 
-    if (settings.searchAll) {
-      chrome.contextMenus.create({
-        id: "search_all",
-        parentId: "bs_parent",
-        title: `Search all ${enabled.length} engines`,
-        contexts: ["selection"],
-      });
-      chrome.contextMenus.create({
-        id: "bs_sep",
-        parentId: "bs_parent",
-        type: "separator",
-        contexts: ["selection"],
-      });
+  // Partition engines into groups and ungrouped
+  const usedGroups = new Set();
+  const grouped = {};   // groupId -> [engine]
+  const ungrouped = [];
+
+  for (const engine of enabled) {
+    const gid = groupMap[engine.id];
+    if (gid && groups.some((g) => g.id === gid)) {
+      usedGroups.add(gid);
+      if (!grouped[gid]) grouped[gid] = [];
+      grouped[gid].push(engine);
+    } else {
+      ungrouped.push(engine);
     }
+  }
 
-    for (const engine of enabled) {
+  // Create group sub-menus first
+  for (const group of groups) {
+    if (!usedGroups.has(group.id)) continue;
+    chrome.contextMenus.create({
+      id: `group_${group.id}`,
+      parentId: "bs_parent",
+      title: group.name,
+      contexts: ["selection"],
+    });
+    for (const engine of grouped[group.id]) {
       chrome.contextMenus.create({
         id: `search_${engine.id}`,
-        parentId: "bs_parent",
+        parentId: `group_${group.id}`,
         title: engine.name,
         contexts: ["selection"],
       });
     }
+  }
+
+  // Separator between groups and ungrouped engines (if both exist)
+  if (usedGroups.size > 0 && ungrouped.length > 0) {
+    chrome.contextMenus.create({
+      id: "bs_group_sep",
+      parentId: "bs_parent",
+      type: "separator",
+      contexts: ["selection"],
+    });
+  }
+
+  // Ungrouped engines
+  for (const engine of ungrouped) {
+    chrome.contextMenus.create({
+      id: `search_${engine.id}`,
+      parentId: "bs_parent",
+      title: engine.name,
+      contexts: ["selection"],
+    });
   }
 }
 
@@ -158,6 +234,8 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg.type === "settingsChanged") {
     loadSettings();
+  } else if (msg.type === "modifierState") {
+    shiftHeld = !!msg.shift;
   }
 });
 
