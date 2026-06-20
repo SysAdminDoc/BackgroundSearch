@@ -1,4 +1,4 @@
-// BackgroundSearch v2.5.0 — Popup Settings
+// BackgroundSearch v2.6.0 — Popup Settings
 
 let ENGINES = [];
 

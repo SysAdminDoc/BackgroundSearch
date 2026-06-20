@@ -1,4 +1,4 @@
-// BackgroundSearch v2.5.0
+// BackgroundSearch v2.6.0
 // Forces new tabs to open in the background + custom context menu search.
 
 let ENGINES = [];
