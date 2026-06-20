@@ -322,12 +322,14 @@ async function addCustomEngine() {
   nameInput.style.borderColor = "";
   urlInput.style.borderColor = "";
 
+  const method = document.getElementById("newEngineMethod").value;
   const engine = {
     id: `custom_${Date.now()}`,
     name,
     url,
     color: randomEngineColor(),
   };
+  if (method === "POST") engine.method = "POST";
 
   if (!settings.customEngines) settings.customEngines = [];
   settings.customEngines.push(engine);
@@ -338,6 +340,7 @@ async function addCustomEngine() {
   await save();
   nameInput.value = "";
   urlInput.value = "";
+  document.getElementById("newEngineMethod").value = "GET";
   document.getElementById("addEngineForm").classList.remove("open");
   renderEngines(document.getElementById("filterInput").value);
 }

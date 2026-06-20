@@ -241,15 +241,24 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (!text) return;
 
   const query = encodeURIComponent(text);
-  const openTab = (url, engineId) => {
+  const openTab = (engine) => {
+    const url = engine.url.replace("%s", query);
     try { const u = new URL(url); if (!["http:", "https:"].includes(u.protocol)) return; } catch { return; }
-    const isWindow = (settings.windowEngines || []).includes(engineId);
+
+    let navUrl = url;
+    if (engine.method === "POST") {
+      const postBody = (engine.postParams || "q=%s").replace("%s", query);
+      const hash = `action=${encodeURIComponent(url)}&${postBody}`;
+      navUrl = chrome.runtime.getURL("post.html") + "#" + hash;
+    }
+
+    const isWindow = (settings.windowEngines || []).includes(engine.id);
     if (isWindow) {
-      chrome.windows.create({ url, focused: true });
+      chrome.windows.create({ url: navUrl, focused: true });
       return;
     }
-    const isFg = (settings.fgEngines || []).includes(engineId);
-    const opts = { url, active: isFg, openerTabId: tab?.id };
+    const isFg = (settings.fgEngines || []).includes(engine.id);
+    const opts = { url: navUrl, active: isFg, openerTabId: tab?.id };
     if (!isFg && settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
     chrome.tabs.create(opts);
     if (!isFg) { bgTabCount++; updateBadge(); }
@@ -262,11 +271,16 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     let i = 0;
     const openBatch = async () => {
       const batch = enabled.slice(i, i + BATCH);
-      for (const engine of batch) {
-        const url = engine.url.replace("%s", query);
+      for (const eng of batch) {
+        const url = eng.url.replace("%s", query);
         try { const u = new URL(url); if (!["http:", "https:"].includes(u.protocol)) continue; } catch { continue; }
-        const isFg = (settings.fgEngines || []).includes(engine.id);
-        const opts = { url, active: isFg, openerTabId: tab?.id };
+        let navUrl = url;
+        if (eng.method === "POST") {
+          const postBody = (eng.postParams || "q=%s").replace("%s", query);
+          navUrl = chrome.runtime.getURL("post.html") + "#action=" + encodeURIComponent(url) + "&" + postBody;
+        }
+        const isFg = (settings.fgEngines || []).includes(eng.id);
+        const opts = { url: navUrl, active: isFg, openerTabId: tab?.id };
         if (!isFg && settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
         const created = await chrome.tabs.create(opts);
         tabIds.push(created.id);
@@ -290,7 +304,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   const engine = getAllEngines().find((e) => e.id === engineId);
   if (!engine) return;
 
-  openTab(engine.url.replace("%s", query), engine.id);
+  openTab(engine);
 });
 
 // ── Settings Sync ──

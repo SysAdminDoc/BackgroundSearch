@@ -732,7 +732,13 @@
     <div class="add-engine-form" id="addEngineForm">
       <input type="text" id="newEngineName" placeholder="Engine name (e.g. Kagi)">
       <input type="text" id="newEngineUrl" placeholder="https://example.com/search?q=%s">
-      <button class="btn-primary" id="addEngineBtn">Add Engine</button>
+      <div style="display:flex;gap:4px;align-items:center">
+        <select id="newEngineMethod" class="group-select" style="max-width:60px">
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+        </select>
+        <button class="btn-primary" id="addEngineBtn" style="flex:1">Add Engine</button>
+      </div>
     </div>
   </div>
 
