@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --crust: #11111b; --mantle: #181825; --base: #1e1e2e;
+    --surface0: #313244; --surface1: #45475a; --surface2: #585b70;
+    --overlay0: #6c7086; --text: #cdd6f4; --subtext0: #a6adc8;
+    --blue: #89b4fa; --green: #a6e3a1; --red: #f38ba8; --mauve: #cba6f7;
+    --peach: #fab387; --teal: #94e2d5;
+  }
+  body {
+    background: var(--base); color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif; font-size: 13px;
+    padding: 12px; min-height: 100vh;
+  }
+  h2 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--overlay0); margin-bottom: 8px; }
+  .search-row { display: flex; gap: 6px; margin-bottom: 12px; }
+  .search-row input {
+    flex: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--surface0);
+    background: var(--mantle); color: var(--text); font-size: 13px; outline: none;
+  }
+  .search-row input:focus { border-color: var(--blue); }
+  .search-row input::placeholder { color: var(--surface2); }
+  .search-row select {
+    padding: 6px 8px; border-radius: 6px; border: 1px solid var(--surface0);
+    background: var(--mantle); color: var(--subtext0); font-size: 11px; outline: none; max-width: 100px;
+  }
+  .search-row button {
+    padding: 8px 14px; border: none; border-radius: 6px; background: var(--blue);
+    color: var(--crust); font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+  .search-row button:hover { opacity: 0.85; }
+  .history-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 10px; border-radius: 6px; background: var(--mantle);
+    margin-bottom: 4px; cursor: pointer; transition: background 0.15s;
+  }
+  .history-item:hover { background: var(--surface0); }
+  .history-query { font-size: 12px; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .history-engine { font-size: 9px; color: var(--overlay0); margin-left: 8px; flex-shrink: 0; }
+  .history-time { font-size: 9px; color: var(--surface2); margin-left: 6px; flex-shrink: 0; }
+  .clear-btn {
+    font-size: 10px; color: var(--overlay0); background: none; border: none;
+    cursor: pointer; padding: 2px 5px; border-radius: 3px; float: right;
+  }
+  .clear-btn:hover { color: var(--subtext0); background: var(--surface0); }
+  .empty { font-size: 11px; color: var(--surface2); text-align: center; padding: 20px 0; }
+</style>
+</head>
+<body>
+  <h2>Quick Search</h2>
+  <div class="search-row">
+    <input type="text" id="query" placeholder="Search..." autofocus>
+    <select id="engineSelect"></select>
+    <button id="searchBtn">Go</button>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <h2 style="margin-bottom:0">Recent Searches</h2>
+    <button class="clear-btn" id="clearHistory">Clear</button>
+  </div>
+  <div id="historyList"></div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>
