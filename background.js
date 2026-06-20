@@ -34,6 +34,7 @@ const DEFAULTS = {
   siteRules: [],
   engineOrder: [],
   middleClickCapture: false,
+  quickMenu: false,
 };
 
 let settings = { ...DEFAULTS };
@@ -407,6 +408,14 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
     if (tab) opts.openerTabId = tab.id;
     chrome.tabs.create(opts);
     if (bg) { bgTabCount++; updateBadge(); }
+  } else if (msg.type === "quickMenuSearch") {
+    const tab = sender.tab;
+    const opts = { url: msg.url, active: false };
+    if (settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
+    if (tab) opts.openerTabId = tab.id;
+    chrome.tabs.create(opts);
+    bgTabCount++; updateBadge();
+    trackEngineUse(msg.engineId);
   } else if (msg.type === "resetBadge") {
     bgTabCount = 0;
     updateBadge();

@@ -19,6 +19,7 @@ const DEFAULTS = {
   siteRules: [],
   engineOrder: [],
   middleClickCapture: false,
+  quickMenu: false,
 };
 
 let settings = {};
@@ -38,6 +39,7 @@ async function load() {
   document.getElementById("searchEnabled").checked = settings.searchEnabled;
   document.getElementById("searchAll").checked = settings.searchAll || false;
   document.getElementById("middleClickCapture").checked = settings.middleClickCapture || false;
+  document.getElementById("quickMenu").checked = settings.quickMenu || false;
 
   const tabPlacement = settings.tabPlacement || "next";
   document.querySelectorAll("#tabPlacementCtrl .seg-btn").forEach((btn) => {
@@ -238,6 +240,11 @@ document.getElementById("searchAll").addEventListener("change", async (e) => {
 
 document.getElementById("middleClickCapture").addEventListener("change", async (e) => {
   settings.middleClickCapture = e.target.checked;
+  await save();
+});
+
+document.getElementById("quickMenu").addEventListener("change", async (e) => {
+  settings.quickMenu = e.target.checked;
   await save();
 });
 
