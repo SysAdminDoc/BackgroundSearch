@@ -40,25 +40,29 @@ function updateBadge() {
 
 // ── Site Rule Matching ──
 
+let compiledRules = [];
+
+function compileRules() {
+  compiledRules = (settings.siteRules || []).map((rule) => {
+    let re = null;
+    if (rule.type === "exact") {
+      re = new RegExp("^" + rule.pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$", "i");
+    } else if (rule.type === "glob") {
+      const escaped = rule.pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+      re = new RegExp("^" + escaped.replace(/\*/g, ".*").replace(/\?/g, ".") + "$", "i");
+    } else if (rule.type === "regex") {
+      try { re = new RegExp(rule.pattern, "i"); } catch { re = null; }
+    }
+    return { re, action: rule.action };
+  }).filter((r) => r.re);
+}
+
 function matchSiteRule(url) {
   if (!url) return null;
-  const rules = settings.siteRules || [];
   let hostname;
   try { hostname = new URL(url).hostname; } catch { return null; }
-
-  for (const rule of rules) {
-    let matched = false;
-    if (rule.type === "exact") {
-      matched = hostname === rule.pattern;
-    } else if (rule.type === "glob") {
-      // Convert glob to regex: * -> .*, ? -> .
-      const escaped = rule.pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&");
-      const re = new RegExp("^" + escaped.replace(/\*/g, ".*").replace(/\?/g, ".") + "$", "i");
-      matched = re.test(hostname);
-    } else if (rule.type === "regex") {
-      try { matched = new RegExp(rule.pattern, "i").test(hostname); } catch {}
-    }
-    if (matched) return rule.action; // "fg", "bg", or "default"
+  for (const { re, action } of compiledRules) {
+    if (re.test(hostname)) return action;
   }
   return null;
 }
@@ -76,15 +80,15 @@ function shouldForceBackground(url) {
 chrome.tabs.onActivated.addListener((activeInfo) => {
   if (recentlyCreatedTabs.has(activeInfo.tabId)) {
     recentlyCreatedTabs.delete(activeInfo.tabId);
-    // Get the tab's URL for site-rule matching
+    const switchBack = () => {
+      if (lastActiveTabId !== null) {
+        setTimeout(() => chrome.tabs.update(lastActiveTabId, { active: true }).catch(() => {}), 50);
+      }
+    };
     chrome.tabs.get(activeInfo.tabId).then((tab) => {
-      if (shouldForceBackground(tab?.pendingUrl || tab?.url) && lastActiveTabId !== null) {
-        chrome.tabs.update(lastActiveTabId, { active: true }).catch(() => {});
-      }
+      if (shouldForceBackground(tab?.pendingUrl || tab?.url)) switchBack();
     }).catch(() => {
-      if (shouldForceBackground(null) && lastActiveTabId !== null) {
-        chrome.tabs.update(lastActiveTabId, { active: true }).catch(() => {});
-      }
+      if (shouldForceBackground(null)) switchBack();
     });
   } else {
     lastActiveTabId = activeInfo.tabId;
@@ -253,9 +257,14 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
   if (info.menuItemId === "search_all") {
     const enabled = getAllEngines().filter((e) => settings.enabledEngines.includes(e.id));
-    for (const engine of enabled) {
-      openTab(engine.url.replace("%s", query), engine.id);
-    }
+    const BATCH = 5;
+    let i = 0;
+    (function openBatch() {
+      const batch = enabled.slice(i, i + BATCH);
+      for (const engine of batch) openTab(engine.url.replace("%s", query), engine.id);
+      i += BATCH;
+      if (i < enabled.length) setTimeout(openBatch, 100);
+    })();
     return;
   }
 
@@ -303,6 +312,7 @@ async function migrateSettings() {
 async function loadSettings() {
   const data = await chrome.storage.sync.get(DEFAULTS);
   settings = data;
+  compileRules();
   await buildContextMenus();
   await updateIcon();
 }
