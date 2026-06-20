@@ -366,9 +366,61 @@ async function deleteCustomEngine(id) {
 
 document.getElementById("toggleAddEngine").addEventListener("click", () => {
   document.getElementById("addEngineForm").classList.toggle("open");
+  document.getElementById("openSearchForm").classList.remove("open");
+});
+
+document.getElementById("toggleOpenSearch").addEventListener("click", () => {
+  document.getElementById("openSearchForm").classList.toggle("open");
+  document.getElementById("addEngineForm").classList.remove("open");
 });
 
 document.getElementById("addEngineBtn").addEventListener("click", addCustomEngine);
+
+document.getElementById("importOpenSearchBtn").addEventListener("click", async () => {
+  const urlInput = document.getElementById("openSearchUrl");
+  const url = urlInput.value.trim();
+  if (!url) { urlInput.style.borderColor = "var(--red)"; return; }
+  urlInput.style.borderColor = "";
+
+  try {
+    const resp = await fetch(url);
+    const text = await resp.text();
+    const doc = new DOMParser().parseFromString(text, "application/xml");
+    const name = doc.querySelector("ShortName")?.textContent?.trim();
+    const urlNode = doc.querySelector('Url[type="text/html"]');
+    const template = urlNode?.getAttribute("template");
+
+    if (!name || !template) { showToast("Invalid OpenSearch descriptor", true); return; }
+
+    const engineUrl = template.replace("{searchTerms}", "%s");
+    if (!isValidEngineUrl(engineUrl)) { showToast("Engine URL not valid", true); return; }
+
+    const engine = {
+      id: `custom_${Date.now()}`,
+      name,
+      url: engineUrl,
+      color: randomEngineColor(),
+    };
+
+    if (!settings.customEngines) settings.customEngines = [];
+    settings.customEngines.push(engine);
+    if (!settings.enabledEngines.includes(engine.id)) {
+      settings.enabledEngines.push(engine.id);
+    }
+
+    await save();
+    urlInput.value = "";
+    document.getElementById("openSearchForm").classList.remove("open");
+    renderEngines(document.getElementById("filterInput").value);
+    showToast(`Imported "${name}"`, false);
+  } catch {
+    showToast("Failed to fetch OpenSearch XML", true);
+  }
+});
+
+document.getElementById("openSearchUrl")?.addEventListener("input", (e) => {
+  e.target.style.borderColor = "";
+});
 
 document.getElementById("newEngineName").addEventListener("input", (e) => {
   e.target.style.borderColor = "";

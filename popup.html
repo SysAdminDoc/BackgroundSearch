@@ -756,7 +756,10 @@
       <input type="text" id="filterInput" placeholder="Filter engines...">
     </div>
     <div class="engine-list" id="engineList"></div>
-    <button class="add-engine-btn" id="toggleAddEngine">+ Add custom engine</button>
+    <div style="display:flex;gap:6px;margin-top:6px">
+      <button class="add-engine-btn" id="toggleAddEngine" style="flex:1;margin-top:0">+ Add custom engine</button>
+      <button class="add-engine-btn" id="toggleOpenSearch" style="flex:1;margin-top:0">+ Import OpenSearch</button>
+    </div>
     <div class="add-engine-form" id="addEngineForm">
       <input type="text" id="newEngineName" placeholder="Engine name (e.g. Kagi)">
       <input type="text" id="newEngineUrl" placeholder="https://example.com/search?q=%s">
@@ -767,6 +770,10 @@
         </select>
         <button class="btn-primary" id="addEngineBtn" style="flex:1">Add Engine</button>
       </div>
+    </div>
+    <div class="add-engine-form" id="openSearchForm">
+      <input type="text" id="openSearchUrl" placeholder="https://example.com/opensearch.xml">
+      <button class="btn-primary" id="importOpenSearchBtn">Import</button>
     </div>
   </div>
 
