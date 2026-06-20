@@ -477,7 +477,29 @@ function getOmniboxEngine() {
   return enabled.find((e) => e.id === settings.omniboxEngineId) || enabled[0] || null;
 }
 
+function parseBang(text) {
+  const match = text.match(/^!(\S+)\s+(.*)/);
+  if (!match) return null;
+  const bang = match[1].toLowerCase();
+  const query = match[2];
+  const allEngines = getAllEngines();
+  const enabled = allEngines.filter((e) => settings.enabledEngines.includes(e.id));
+  const engine = enabled.find((e) =>
+    e.id.toLowerCase() === bang ||
+    e.name.toLowerCase().startsWith(bang) ||
+    e.id.toLowerCase().startsWith(bang)
+  );
+  return engine ? { engine, query } : null;
+}
+
 chrome.omnibox.onInputChanged.addListener((text, suggest) => {
+  const bang = parseBang(text);
+  if (bang) {
+    chrome.omnibox.setDefaultSuggestion({
+      description: `Search <dim>${escXml(bang.engine.name)}</dim> for <match>${escXml(bang.query)}</match>`,
+    });
+    return;
+  }
   const engine = getOmniboxEngine();
   if (!engine) return;
   chrome.omnibox.setDefaultSuggestion({
@@ -486,9 +508,12 @@ chrome.omnibox.onInputChanged.addListener((text, suggest) => {
 });
 
 chrome.omnibox.onInputEntered.addListener(async (text, disposition) => {
-  const engine = getOmniboxEngine();
-  if (!engine || !text.trim()) return;
-  const url = engine.url.replace("%s", encodeURIComponent(text.trim()));
+  const bang = parseBang(text.trim());
+  const engine = bang ? bang.engine : getOmniboxEngine();
+  const query = bang ? bang.query : text.trim();
+  if (!engine || !query) return;
+  const url = engine.url.replace("%s", encodeURIComponent(query));
+  trackEngineUse(engine.id);
 
   if (disposition === "currentTab") {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
