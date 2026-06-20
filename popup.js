@@ -112,9 +112,14 @@ function renderEngines(filter = "") {
       groupHtml = `<select class="group-select" data-engine="${engine.id}" title="Assign group">${opts}</select>`;
     }
 
+    const faviconSrc = getFaviconUrl(engine.url);
+    const iconHtml = faviconSrc
+      ? `<img class="icon-img" src="${faviconSrc}" width="20" height="20" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" style="border-radius:4px"><div class="icon" style="background:${engine.color};display:none">${initial}</div>`
+      : `<div class="icon" style="background:${engine.color}">${initial}</div>`;
+
     row.innerHTML = `
       <div class="toggle-label">
-        <div class="icon" style="background:${engine.color}">${initial}</div>
+        ${iconHtml}
         <span>${name}</span>
       </div>
       ${groupHtml}
@@ -298,6 +303,13 @@ function showToast(msg, isError) {
   toast.style.opacity = "1";
   clearTimeout(toast._timer);
   toast._timer = setTimeout(() => { toast.style.opacity = "0"; }, 2500);
+}
+
+function getFaviconUrl(engineUrl) {
+  try {
+    const domain = new URL(engineUrl.replace("%s", "test")).hostname;
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+  } catch { return null; }
 }
 
 function randomEngineColor() {
