@@ -149,6 +149,27 @@ async function buildContextMenus() {
 
   await chrome.contextMenus.removeAll();
 
+  if (enabled.length === 0 && !settings.searchEnabled) return;
+
+  if (settings.searchEnabled) {
+    const REVERSE_ENGINES = [
+      { id: "img_google", name: "Google", url: "https://lens.google.com/uploadbyurl?url=%s" },
+      { id: "img_yandex", name: "Yandex", url: "https://yandex.com/images/search?rpt=imageview&url=%s" },
+      { id: "img_tineye", name: "TinEye", url: "https://tineye.com/search?url=%s" },
+      { id: "img_bing",   name: "Bing",   url: "https://www.bing.com/images/search?view=detailv2&iss=sbi&q=imgurl:%s" },
+    ];
+    chrome.contextMenus.create({ id: "bs_img_parent", title: "Reverse image search", contexts: ["image"] });
+    for (const eng of REVERSE_ENGINES) {
+      chrome.contextMenus.create({ id: eng.id, parentId: "bs_img_parent", title: eng.name, contexts: ["image"] });
+    }
+  }
+
+  chrome.contextMenus.create({
+    id: "bs_clipboard",
+    title: "Search clipboard text",
+    contexts: ["page"],
+  });
+
   if (enabled.length === 0) return;
 
   const ctxs = ["selection", "link"];
@@ -236,7 +257,44 @@ async function buildContextMenus() {
   }
 }
 
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId === "bs_clipboard" && tab?.id) {
+    try {
+      const results = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => navigator.clipboard.readText(),
+      });
+      const clipText = results?.[0]?.result;
+      if (!clipText) return;
+      const engine = getOmniboxEngine();
+      if (!engine) return;
+      const url = engine.url.replace("%s", encodeURIComponent(clipText));
+      const opts = { url, active: false, openerTabId: tab.id };
+      if (settings.tabPlacement !== "end") opts.index = tab.index + 1;
+      chrome.tabs.create(opts);
+      bgTabCount++; updateBadge();
+    } catch {}
+    return;
+  }
+
+  if (info.menuItemId.startsWith("img_") && info.srcUrl) {
+    const REVERSE = {
+      img_google: "https://lens.google.com/uploadbyurl?url=%s",
+      img_yandex: "https://yandex.com/images/search?rpt=imageview&url=%s",
+      img_tineye: "https://tineye.com/search?url=%s",
+      img_bing: "https://www.bing.com/images/search?view=detailv2&iss=sbi&q=imgurl:%s",
+    };
+    const tmpl = REVERSE[info.menuItemId];
+    if (tmpl) {
+      const url = tmpl.replace("%s", encodeURIComponent(info.srcUrl));
+      const opts = { url, active: false, openerTabId: tab?.id };
+      if (settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
+      chrome.tabs.create(opts);
+      bgTabCount++; updateBadge();
+    }
+    return;
+  }
+
   const text = info.selectionText || info.linkUrl || "";
   if (!text) return;
 
