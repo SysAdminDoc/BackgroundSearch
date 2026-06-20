@@ -46,6 +46,8 @@ const DEFAULTS = {
   engineGroupMap: {},     // {engineId: groupId}
   windowEngines: [],      // engines that open in a new window
   siteRules: [],          // [{pattern, type:"exact"|"glob"|"regex", action:"fg"|"bg"|"default"}]
+  engineOrder: [],        // ordered engine IDs
+  middleClickCapture: false,
 };
 
 let settings = { ...DEFAULTS };
@@ -123,7 +125,16 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 // ── Context Menu Search ──
 
 function getAllEngines() {
-  return [...ENGINES, ...(settings.customEngines || [])];
+  const all = [...ENGINES, ...(settings.customEngines || [])];
+  const order = settings.engineOrder || [];
+  if (order.length === 0) return all;
+  const byId = new Map(all.map((e) => [e.id, e]));
+  const ordered = [];
+  for (const id of order) {
+    if (byId.has(id)) { ordered.push(byId.get(id)); byId.delete(id); }
+  }
+  for (const e of byId.values()) ordered.push(e);
+  return ordered;
 }
 
 // Config snapshot for skipping redundant rebuilds
@@ -274,11 +285,19 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
 // ── Settings Sync ──
 
-chrome.runtime.onMessage.addListener((msg) => {
+chrome.runtime.onMessage.addListener((msg, sender) => {
   if (msg.type === "settingsChanged") {
     loadSettings();
   } else if (msg.type === "modifierState") {
     shiftHeld = !!msg.shift;
+  } else if (msg.type === "openTab") {
+    // Middle-click capture: open tab respecting force-background + site rules
+    const bg = shouldForceBackground(msg.url);
+    const tab = sender.tab;
+    const opts = { url: msg.url, active: !bg };
+    if (bg && settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
+    if (tab) opts.openerTabId = tab.id;
+    chrome.tabs.create(opts);
   }
 });
 

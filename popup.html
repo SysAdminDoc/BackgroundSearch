@@ -153,6 +153,9 @@
 
   .toggle-row:hover { background: var(--surface0); }
   .toggle-row:last-child { margin-bottom: 0; }
+  .toggle-row[draggable="true"] { cursor: grab; }
+  .toggle-row.dragging { opacity: 0.4; }
+  .toggle-row.drag-over { border: 1px dashed var(--blue); }
 
   .toggle-label {
     display: flex;
@@ -637,6 +640,16 @@
       </div>
       <label class="toggle-switch">
         <input type="checkbox" id="searchAll">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-label">
+        <span>Middle-Click Capture</span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="middleClickCapture">
         <div class="toggle-track"></div>
         <div class="toggle-thumb"></div>
       </label>

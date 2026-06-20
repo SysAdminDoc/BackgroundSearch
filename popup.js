@@ -46,6 +46,8 @@ const DEFAULTS = {
   windowEngines: [],
   themeMode: "system",    // "dark" | "light" | "system"
   siteRules: [],          // [{pattern, type, action}]
+  engineOrder: [],        // ordered engine IDs (empty = default order)
+  middleClickCapture: false,
 };
 
 let settings = {};
@@ -61,6 +63,7 @@ async function load() {
   document.getElementById("bgTabsEnabled").checked = settings.bgTabsEnabled;
   document.getElementById("searchEnabled").checked = settings.searchEnabled;
   document.getElementById("searchAll").checked = settings.searchAll || false;
+  document.getElementById("middleClickCapture").checked = settings.middleClickCapture || false;
 
   const tabPlacement = settings.tabPlacement || "next";
   document.querySelectorAll("#tabPlacementCtrl .seg-btn").forEach((btn) => {
@@ -84,11 +87,25 @@ function escHtml(s) {
     .replace(/"/g, "&quot;");
 }
 
+function getOrderedEngines() {
+  const all = [...ENGINES, ...(settings.customEngines || [])];
+  const order = settings.engineOrder || [];
+  if (order.length === 0) return all;
+  const byId = new Map(all.map((e) => [e.id, e]));
+  const ordered = [];
+  for (const id of order) {
+    if (byId.has(id)) { ordered.push(byId.get(id)); byId.delete(id); }
+  }
+  // Append any engines not in the order list (new engines)
+  for (const e of byId.values()) ordered.push(e);
+  return ordered;
+}
+
 function renderEngines(filter = "") {
   const list = document.getElementById("engineList");
   list.innerHTML = "";
   const lower = filter.toLowerCase();
-  const allEngines = [...ENGINES, ...(settings.customEngines || [])];
+  const allEngines = getOrderedEngines();
   const groups = settings.engineGroups || [];
   const groupMap = settings.engineGroupMap || {};
 
@@ -97,6 +114,8 @@ function renderEngines(filter = "") {
 
     const row = document.createElement("div");
     row.className = "toggle-row";
+    row.draggable = !lower; // disable drag while filtering
+    row.dataset.engineId = engine.id;
 
     const initial = escHtml(engine.name.charAt(0));
     const name = escHtml(engine.name);
@@ -147,6 +166,26 @@ function renderEngines(filter = "") {
 
     row.querySelector("input").addEventListener("change", (e) => {
       toggleEngine(engine.id, e.target.checked);
+    });
+
+    // Drag-and-drop reorder
+    row.addEventListener("dragstart", (e) => {
+      e.dataTransfer.setData("text/plain", engine.id);
+      row.classList.add("dragging");
+    });
+    row.addEventListener("dragend", () => row.classList.remove("dragging"));
+    row.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      row.classList.add("drag-over");
+    });
+    row.addEventListener("dragleave", () => row.classList.remove("drag-over"));
+    row.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      row.classList.remove("drag-over");
+      const fromId = e.dataTransfer.getData("text/plain");
+      const toId = engine.id;
+      if (fromId === toId) return;
+      await reorderEngine(fromId, toId);
     });
 
     list.appendChild(row);
@@ -200,6 +239,11 @@ document.getElementById("disableAll").addEventListener("click", async () => {
 
 document.getElementById("searchAll").addEventListener("change", async (e) => {
   settings.searchAll = e.target.checked;
+  await save();
+});
+
+document.getElementById("middleClickCapture").addEventListener("change", async (e) => {
+  settings.middleClickCapture = e.target.checked;
   await save();
 });
 
@@ -305,6 +349,20 @@ async function cycleEngineTarget(id) {
     // BG -> FG
     settings.fgEngines = [...fgEngines, id];
   }
+  await save();
+  renderEngines(document.getElementById("filterInput").value);
+}
+
+// ── Drag-to-Reorder ──
+
+async function reorderEngine(fromId, toId) {
+  const ordered = getOrderedEngines().map((e) => e.id);
+  const fromIdx = ordered.indexOf(fromId);
+  const toIdx = ordered.indexOf(toId);
+  if (fromIdx === -1 || toIdx === -1) return;
+  ordered.splice(fromIdx, 1);
+  ordered.splice(toIdx, 0, fromId);
+  settings.engineOrder = ordered;
   await save();
   renderEngines(document.getElementById("filterInput").value);
 }
@@ -442,6 +500,7 @@ async function resetSection(section) {
     settings.customEngines = [];
     settings.engineGroups = [];
     settings.engineGroupMap = {};
+    settings.engineOrder = [];
   }
   await save();
   location.reload();
