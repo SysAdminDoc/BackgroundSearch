@@ -270,6 +270,47 @@ document.querySelectorAll("#themeCtrl .seg-btn").forEach((btn) => {
 
 // ── Custom Engines ──
 
+const SAFE_PROTOCOLS = ["http:", "https:"];
+const VALID_SETTINGS_KEYS = new Set(Object.keys(DEFAULTS));
+
+function isValidEngineUrl(url) {
+  if (!url || !url.includes("%s")) return false;
+  try {
+    const test = new URL(url.replace("%s", "test"));
+    return SAFE_PROTOCOLS.includes(test.protocol);
+  } catch { return false; }
+}
+
+function sanitizeImport(imported) {
+  const clean = {};
+  for (const key of Object.keys(imported)) {
+    if (!VALID_SETTINGS_KEYS.has(key)) continue;
+    clean[key] = imported[key];
+  }
+  if (Array.isArray(clean.customEngines)) {
+    clean.customEngines = clean.customEngines.filter(
+      (e) => e && typeof e.name === "string" && isValidEngineUrl(e.url)
+    );
+  }
+  return clean;
+}
+
+function showToast(msg, isError) {
+  let toast = document.getElementById("bs-toast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "bs-toast";
+    toast.style.cssText = "position:fixed;bottom:12px;left:50%;transform:translateX(-50%);padding:6px 14px;border-radius:6px;font-size:11px;z-index:999;transition:opacity 0.3s;pointer-events:none;";
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.background = isError ? "var(--red)" : "var(--green)";
+  toast.style.color = "var(--crust)";
+  toast.style.opacity = "1";
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => { toast.style.opacity = "0"; }, 2500);
+}
+
 function randomEngineColor() {
   const palette = ["#cba6f7", "#89b4fa", "#94e2d5", "#a6e3a1", "#f9e2af", "#fab387", "#f38ba8", "#74c7ec"];
   return palette[Math.floor(Math.random() * palette.length)];
@@ -283,8 +324,11 @@ async function addCustomEngine() {
 
   let valid = true;
   if (!name) { nameInput.style.borderColor = "var(--red)"; valid = false; }
-  if (!url || !url.includes("%s")) { urlInput.style.borderColor = "var(--red)"; valid = false; }
-  if (!valid) return;
+  if (!isValidEngineUrl(url)) { urlInput.style.borderColor = "var(--red)"; valid = false; }
+  if (!valid) {
+    if (url && !isValidEngineUrl(url)) showToast("URL must be https:// with %s placeholder", true);
+    return;
+  }
 
   nameInput.style.borderColor = "";
   urlInput.style.borderColor = "";
@@ -534,7 +578,8 @@ document.getElementById("importFile").addEventListener("change", async (e) => {
   if (!file) return;
   try {
     const text = await file.text();
-    const imported = JSON.parse(text);
+    const raw = JSON.parse(text);
+    const imported = sanitizeImport(raw);
     settings = { ...DEFAULTS, ...imported };
     await chrome.storage.sync.set(settings);
     chrome.runtime.sendMessage({ type: "settingsChanged" });
@@ -542,6 +587,7 @@ document.getElementById("importFile").addEventListener("change", async (e) => {
     document.getElementById("bgTabsEnabled").checked = settings.bgTabsEnabled;
     document.getElementById("searchEnabled").checked = settings.searchEnabled;
     document.getElementById("searchAll").checked = settings.searchAll || false;
+    document.getElementById("middleClickCapture").checked = settings.middleClickCapture || false;
 
     const tp = settings.tabPlacement || "next";
     document.querySelectorAll("#tabPlacementCtrl .seg-btn").forEach((btn) => {
@@ -558,8 +604,11 @@ document.getElementById("importFile").addEventListener("change", async (e) => {
     document.getElementById("enginesSection").style.opacity = on ? "1" : "0.4";
     document.getElementById("enginesSection").style.pointerEvents = on ? "auto" : "none";
     renderEngines();
+    renderGroups();
+    renderSiteRules();
+    showToast("Config imported", false);
   } catch {
-    // malformed file — silently ignore
+    showToast("Invalid config file", true);
   }
   e.target.value = "";
 });

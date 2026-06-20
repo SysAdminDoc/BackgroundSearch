@@ -99,8 +99,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
         chrome.tabs.update(lastActiveTabId, { active: true }).catch(() => {});
       }
     }).catch(() => {
-      // Fallback: apply global rule without URL
-      if (shouldForceBackground() && lastActiveTabId !== null) {
+      if (shouldForceBackground(null) && lastActiveTabId !== null) {
         chrome.tabs.update(lastActiveTabId, { active: true }).catch(() => {});
       }
     });
@@ -257,6 +256,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
   const query = encodeURIComponent(info.selectionText);
   const openTab = (url, engineId) => {
+    try { const u = new URL(url); if (!["http:", "https:"].includes(u.protocol)) return; } catch { return; }
     const isWindow = (settings.windowEngines || []).includes(engineId);
     if (isWindow) {
       chrome.windows.create({ url, focused: true });
