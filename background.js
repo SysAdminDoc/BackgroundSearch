@@ -270,6 +270,18 @@ async function buildContextMenus() {
   }
 }
 
+function expandTemplate(template, query, tab) {
+  let url = template.replace(/%s/g, query);
+  const pageUrl = tab?.url || "";
+  const pageTitle = tab?.title || "";
+  let host = "";
+  try { host = new URL(pageUrl).hostname; } catch {}
+  url = url.replace(/%url/g, encodeURIComponent(pageUrl));
+  url = url.replace(/%title/g, encodeURIComponent(pageTitle));
+  url = url.replace(/%host/g, encodeURIComponent(host));
+  return url;
+}
+
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === "bs_clipboard" && tab?.id) {
     try {
@@ -313,7 +325,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
   const query = encodeURIComponent(text);
   const openTab = (engine) => {
-    const url = engine.url.replace("%s", query);
+    const url = expandTemplate(engine.url, query, tab);
     try { const u = new URL(url); if (!["http:", "https:"].includes(u.protocol)) return; } catch { return; }
 
     let navUrl = url;
@@ -343,11 +355,11 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     const openBatch = async () => {
       const batch = enabled.slice(i, i + BATCH);
       for (const eng of batch) {
-        const url = eng.url.replace("%s", query);
+        const url = expandTemplate(eng.url, query, tab);
         try { const u = new URL(url); if (!["http:", "https:"].includes(u.protocol)) continue; } catch { continue; }
         let navUrl = url;
         if (eng.method === "POST") {
-          const postBody = (eng.postParams || "q=%s").replace("%s", query);
+          const postBody = expandTemplate(eng.postParams || "q=%s", query, tab);
           navUrl = chrome.runtime.getURL("post.html") + "#action=" + encodeURIComponent(url) + "&" + postBody;
         }
         const isFg = (settings.fgEngines || []).includes(eng.id);
