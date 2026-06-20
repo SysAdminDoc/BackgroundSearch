@@ -33,6 +33,7 @@ const ENGINES = [
 ];
 
 const DEFAULTS = {
+  _schemaVersion: 1,
   bgTabsEnabled: true,
   searchEnabled: true,
   searchAll: false,
@@ -44,9 +45,9 @@ const DEFAULTS = {
   engineGroups: [],
   engineGroupMap: {},
   windowEngines: [],
-  themeMode: "system",    // "dark" | "light" | "system"
-  siteRules: [],          // [{pattern, type, action}]
-  engineOrder: [],        // ordered engine IDs (empty = default order)
+  themeMode: "system",
+  siteRules: [],
+  engineOrder: [],
   middleClickCapture: false,
 };
 
@@ -201,8 +202,23 @@ async function toggleEngine(id, on) {
   await save();
 }
 
+const SYNC_QUOTA = 102400;
+const SYNC_WARN_THRESHOLD = 0.8;
+
 async function save() {
-  await chrome.storage.sync.set(settings);
+  try {
+    await chrome.storage.sync.set(settings);
+  } catch (err) {
+    if (err?.message?.includes("QUOTA")) {
+      await chrome.storage.local.set(settings);
+      showToast("Storage full — saved locally only", true);
+    }
+    return;
+  }
+  const used = await chrome.storage.sync.getBytesInUse(null);
+  if (used > SYNC_QUOTA * SYNC_WARN_THRESHOLD) {
+    showToast(`Storage ${Math.round(used / SYNC_QUOTA * 100)}% full`, true);
+  }
   chrome.runtime.sendMessage({ type: "settingsChanged" });
 }
 

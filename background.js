@@ -33,7 +33,10 @@ const ENGINES = [
   { id: "pubmed",       name: "PubMed",         url: "https://pubmed.ncbi.nlm.nih.gov/?term=%s" },
 ];
 
+const SCHEMA_VERSION = 1;
+
 const DEFAULTS = {
+  _schemaVersion: SCHEMA_VERSION,
   bgTabsEnabled: true,
   searchEnabled: true,
   searchAll: false,
@@ -42,11 +45,11 @@ const DEFAULTS = {
   enabledEngines: ["google"],
   fgEngines: [],
   customEngines: [],
-  engineGroups: [],       // [{id, name}]
-  engineGroupMap: {},     // {engineId: groupId}
-  windowEngines: [],      // engines that open in a new window
-  siteRules: [],          // [{pattern, type:"exact"|"glob"|"regex", action:"fg"|"bg"|"default"}]
-  engineOrder: [],        // ordered engine IDs
+  engineGroups: [],
+  engineGroupMap: {},
+  windowEngines: [],
+  siteRules: [],
+  engineOrder: [],
   middleClickCapture: false,
 };
 
@@ -301,6 +304,19 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
   }
 });
 
+async function migrateSettings() {
+  const data = await chrome.storage.sync.get(null);
+  const version = data._schemaVersion || 0;
+  if (version >= SCHEMA_VERSION) return;
+
+  const merged = { ...DEFAULTS };
+  for (const key of Object.keys(data)) {
+    if (key in DEFAULTS) merged[key] = data[key];
+  }
+  merged._schemaVersion = SCHEMA_VERSION;
+  await chrome.storage.sync.set(merged);
+}
+
 async function loadSettings() {
   const data = await chrome.storage.sync.get(DEFAULTS);
   settings = data;
@@ -383,7 +399,8 @@ chrome.omnibox.onInputEntered.addListener(async (text, disposition) => {
 
 // ── Init ──
 
-async function init() {
+async function init(doMigrate) {
+  if (doMigrate) await migrateSettings();
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tab) lastActiveTabId = tab.id;
@@ -391,5 +408,5 @@ async function init() {
   await loadSettings();
 }
 
-chrome.runtime.onStartup.addListener(init);
-chrome.runtime.onInstalled.addListener(init);
+chrome.runtime.onStartup.addListener(() => init(false));
+chrome.runtime.onInstalled.addListener((details) => init(details.reason === "update" || details.reason === "install"));
