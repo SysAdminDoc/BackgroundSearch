@@ -257,14 +257,32 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
   if (info.menuItemId === "search_all") {
     const enabled = getAllEngines().filter((e) => settings.enabledEngines.includes(e.id));
+    const tabIds = [];
     const BATCH = 5;
     let i = 0;
-    (function openBatch() {
+    const openBatch = async () => {
       const batch = enabled.slice(i, i + BATCH);
-      for (const engine of batch) openTab(engine.url.replace("%s", query), engine.id);
+      for (const engine of batch) {
+        const url = engine.url.replace("%s", query);
+        try { const u = new URL(url); if (!["http:", "https:"].includes(u.protocol)) continue; } catch { continue; }
+        const isFg = (settings.fgEngines || []).includes(engine.id);
+        const opts = { url, active: isFg, openerTabId: tab?.id };
+        if (!isFg && settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
+        const created = await chrome.tabs.create(opts);
+        tabIds.push(created.id);
+        if (!isFg) { bgTabCount++; updateBadge(); }
+      }
       i += BATCH;
-      if (i < enabled.length) setTimeout(openBatch, 100);
-    })();
+      if (i < enabled.length) { setTimeout(openBatch, 100); return; }
+      if (tabIds.length > 1) {
+        try {
+          const groupId = await chrome.tabs.group({ tabIds });
+          const label = text.length > 20 ? text.slice(0, 20) + "…" : text;
+          await chrome.tabGroups.update(groupId, { title: `BS: ${label}`, color: "blue" });
+        } catch {}
+      }
+    };
+    openBatch();
     return;
   }
 

@@ -6,6 +6,7 @@
   "omnibox": { "keyword": "bs" },
   "permissions": [
     "tabs",
+    "tabGroups",
     "contextMenus",
     "storage"
   ],
