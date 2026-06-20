@@ -1,36 +1,6 @@
-// BackgroundSearch v2.4.0 — Popup Settings
+// BackgroundSearch v2.5.0 — Popup Settings
 
-const ENGINES = [
-  { id: "google",       name: "Google",         url: "https://www.google.com/search?q=%s",                  color: "#4285f4" },
-  { id: "bing",         name: "Bing",           url: "https://www.bing.com/search?q=%s",                    color: "#00809d" },
-  { id: "duckduckgo",   name: "DuckDuckGo",     url: "https://duckduckgo.com/?q=%s",                       color: "#de5833" },
-  { id: "yahoo",        name: "Yahoo",          url: "https://search.yahoo.com/search?p=%s",                color: "#720e9e" },
-  { id: "brave",        name: "Brave Search",   url: "https://search.brave.com/search?q=%s",                color: "#fb542b" },
-  { id: "ecosia",       name: "Ecosia",         url: "https://www.ecosia.org/search?q=%s",                  color: "#36acb8" },
-  { id: "startpage",    name: "Startpage",      url: "https://www.startpage.com/sp/search?query=%s",        color: "#6573ff" },
-  { id: "yandex",       name: "Yandex",         url: "https://yandex.com/search/?text=%s",                  color: "#ff0000" },
-  { id: "baidu",        name: "Baidu",          url: "https://www.baidu.com/s?wd=%s",                       color: "#2932e1" },
-  { id: "perplexity",   name: "Perplexity",     url: "https://www.perplexity.ai/search?q=%s",               color: "#20b8cd" },
-  { id: "wolframalpha", name: "Wolfram Alpha",  url: "https://www.wolframalpha.com/input/?i=%s",            color: "#dd1100" },
-  { id: "wikipedia",    name: "Wikipedia",      url: "https://en.wikipedia.org/wiki/Special:Search?search=%s", color: "#636466" },
-  { id: "youtube",      name: "YouTube",        url: "https://www.youtube.com/results?search_query=%s",     color: "#ff0000" },
-  { id: "reddit",       name: "Reddit",         url: "https://www.reddit.com/search/?q=%s",                 color: "#ff4500" },
-  { id: "github",       name: "GitHub",         url: "https://github.com/search?q=%s",                      color: "#8b5cf6" },
-  { id: "stackoverflow",name: "Stack Overflow", url: "https://stackoverflow.com/search?q=%s",               color: "#f48024" },
-  { id: "amazon",       name: "Amazon",         url: "https://www.amazon.com/s?k=%s",                       color: "#ff9900" },
-  { id: "ebay",         name: "eBay",           url: "https://www.ebay.com/sch/i.html?_nkw=%s",             color: "#e53238" },
-  { id: "twitch",       name: "Twitch",         url: "https://www.twitch.tv/search?term=%s",                color: "#9146ff" },
-  { id: "imdb",         name: "IMDb",           url: "https://www.imdb.com/find/?q=%s",                             color: "#f5c518" },
-  { id: "kagi",         name: "Kagi",           url: "https://kagi.com/search?q=%s",                               color: "#ff7800" },
-  { id: "hackernews",   name: "Hacker News",    url: "https://hn.algolia.com/?query=%s",                           color: "#ff6600" },
-  { id: "mdn",          name: "MDN Web Docs",   url: "https://developer.mozilla.org/en-US/search?q=%s",            color: "#0092db" },
-  { id: "googleimages", name: "Google Images",  url: "https://www.google.com/search?tbm=isch&q=%s",                color: "#34a853" },
-  { id: "googlemaps",   name: "Google Maps",    url: "https://www.google.com/maps/search/%s",                      color: "#ea4335" },
-  { id: "twitter",      name: "Twitter / X",    url: "https://twitter.com/search?q=%s",                            color: "#1da1f2" },
-  { id: "npm",          name: "npm",            url: "https://www.npmjs.com/search?q=%s",                          color: "#cc3534" },
-  { id: "arxiv",        name: "arXiv",          url: "https://arxiv.org/search/?query=%s&searchtype=all",          color: "#b31b1b" },
-  { id: "pubmed",       name: "PubMed",         url: "https://pubmed.ncbi.nlm.nih.gov/?term=%s",                   color: "#0055a2" },
-];
+let ENGINES = [];
 
 const DEFAULTS = {
   _schemaVersion: 1,
@@ -58,6 +28,9 @@ function applyTheme(mode) {
 }
 
 async function load() {
+  const resp = await fetch(chrome.runtime.getURL("engines.json"));
+  ENGINES = await resp.json();
+
   const data = await chrome.storage.sync.get(DEFAULTS);
   settings = data;
 

@@ -1,37 +1,7 @@
-// BackgroundSearch v2.4.0
+// BackgroundSearch v2.5.0
 // Forces new tabs to open in the background + custom context menu search.
 
-const ENGINES = [
-  { id: "google",       name: "Google",         url: "https://www.google.com/search?q=%s" },
-  { id: "bing",         name: "Bing",           url: "https://www.bing.com/search?q=%s" },
-  { id: "duckduckgo",   name: "DuckDuckGo",     url: "https://duckduckgo.com/?q=%s" },
-  { id: "yahoo",        name: "Yahoo",          url: "https://search.yahoo.com/search?p=%s" },
-  { id: "brave",        name: "Brave Search",   url: "https://search.brave.com/search?q=%s" },
-  { id: "ecosia",       name: "Ecosia",         url: "https://www.ecosia.org/search?q=%s" },
-  { id: "startpage",    name: "Startpage",      url: "https://www.startpage.com/sp/search?query=%s" },
-  { id: "yandex",       name: "Yandex",         url: "https://yandex.com/search/?text=%s" },
-  { id: "baidu",        name: "Baidu",          url: "https://www.baidu.com/s?wd=%s" },
-  { id: "perplexity",   name: "Perplexity",     url: "https://www.perplexity.ai/search?q=%s" },
-  { id: "wolframalpha", name: "Wolfram Alpha",  url: "https://www.wolframalpha.com/input/?i=%s" },
-  { id: "wikipedia",    name: "Wikipedia",      url: "https://en.wikipedia.org/wiki/Special:Search?search=%s" },
-  { id: "youtube",      name: "YouTube",        url: "https://www.youtube.com/results?search_query=%s" },
-  { id: "reddit",       name: "Reddit",         url: "https://www.reddit.com/search/?q=%s" },
-  { id: "github",       name: "GitHub",         url: "https://github.com/search?q=%s" },
-  { id: "stackoverflow",name: "Stack Overflow", url: "https://stackoverflow.com/search?q=%s" },
-  { id: "amazon",       name: "Amazon",         url: "https://www.amazon.com/s?k=%s" },
-  { id: "ebay",         name: "eBay",           url: "https://www.ebay.com/sch/i.html?_nkw=%s" },
-  { id: "twitch",       name: "Twitch",         url: "https://www.twitch.tv/search?term=%s" },
-  { id: "imdb",         name: "IMDb",           url: "https://www.imdb.com/find/?q=%s" },
-  { id: "kagi",         name: "Kagi",           url: "https://kagi.com/search?q=%s" },
-  { id: "hackernews",   name: "Hacker News",    url: "https://hn.algolia.com/?query=%s" },
-  { id: "mdn",          name: "MDN Web Docs",   url: "https://developer.mozilla.org/en-US/search?q=%s" },
-  { id: "googleimages", name: "Google Images",  url: "https://www.google.com/search?tbm=isch&q=%s" },
-  { id: "googlemaps",   name: "Google Maps",    url: "https://www.google.com/maps/search/%s" },
-  { id: "twitter",      name: "Twitter / X",    url: "https://twitter.com/search?q=%s" },
-  { id: "npm",          name: "npm",            url: "https://www.npmjs.com/search?q=%s" },
-  { id: "arxiv",        name: "arXiv",          url: "https://arxiv.org/search/?query=%s&searchtype=all" },
-  { id: "pubmed",       name: "PubMed",         url: "https://pubmed.ncbi.nlm.nih.gov/?term=%s" },
-];
+let ENGINES = [];
 
 const SCHEMA_VERSION = 1;
 
@@ -400,6 +370,8 @@ chrome.omnibox.onInputEntered.addListener(async (text, disposition) => {
 // ── Init ──
 
 async function init(doMigrate) {
+  const resp = await fetch(chrome.runtime.getURL("engines.json"));
+  ENGINES = await resp.json();
   if (doMigrate) await migrateSettings();
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });

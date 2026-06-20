@@ -1,6 +1,6 @@
 # BackgroundSearch
 
-![Version](https://img.shields.io/badge/version-v2.4.0-blue) ![License](https://img.shields.io/badge/license-MIT-green) ![Platform](https://img.shields.io/badge/platform-Chrome%20Extension-lightgrey)
+![Version](https://img.shields.io/badge/version-v2.5.0-blue) ![License](https://img.shields.io/badge/license-MIT-green) ![Platform](https://img.shields.io/badge/platform-Chrome%20Extension-lightgrey)
 
 Chrome extension that forces new tabs to open in the background and adds custom search engines to the right-click context menu.
 
