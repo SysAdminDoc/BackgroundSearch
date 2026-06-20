@@ -613,6 +613,7 @@ document.getElementById("newGroupName")?.addEventListener("keydown", (e) => {
 });
 
 load().then(() => {
+  chrome.runtime.sendMessage({ type: "resetBadge" }).catch(() => {});
   if (!settings.searchEnabled) {
     document.getElementById("enginesSection").style.opacity = "0.4";
     document.getElementById("enginesSection").style.pointerEvents = "none";

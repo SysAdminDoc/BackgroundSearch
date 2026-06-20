@@ -26,7 +26,17 @@ const DEFAULTS = {
 let settings = { ...DEFAULTS };
 let lastActiveTabId = null;
 let recentlyCreatedTabs = new Set();
-let shiftHeld = false; // Shift modifier state from content script
+let shiftHeld = false;
+let bgTabCount = 0;
+
+// ── Badge ──
+
+function updateBadge() {
+  const text = bgTabCount > 0 ? String(bgTabCount) : "";
+  chrome.action.setBadgeText({ text });
+  chrome.action.setBadgeBackgroundColor({ color: "#89b4fa" });
+  chrome.action.setBadgeTextColor({ color: "#1e1e2e" });
+}
 
 // ── Site Rule Matching ──
 
@@ -137,20 +147,21 @@ async function buildContextMenus() {
 
   if (enabled.length === 0) return;
 
+  const ctxs = ["selection", "link"];
+
   if (enabled.length === 1) {
     chrome.contextMenus.create({
       id: `search_${enabled[0].id}`,
       title: `Search ${enabled[0].name} for "%s"`,
-      contexts: ["selection"],
+      contexts: ctxs,
     });
     return;
   }
 
-  // Multiple engines — use parent menu
   chrome.contextMenus.create({
     id: "bs_parent",
     title: `BackgroundSearch "%s"`,
-    contexts: ["selection"],
+    contexts: ctxs,
   });
 
   if (settings.searchAll) {
@@ -158,13 +169,13 @@ async function buildContextMenus() {
       id: "search_all",
       parentId: "bs_parent",
       title: `Search all ${enabled.length} engines`,
-      contexts: ["selection"],
+      contexts: ctxs,
     });
     chrome.contextMenus.create({
       id: "bs_sep",
       parentId: "bs_parent",
       type: "separator",
-      contexts: ["selection"],
+      contexts: ctxs,
     });
   }
 
@@ -184,50 +195,48 @@ async function buildContextMenus() {
     }
   }
 
-  // Create group sub-menus first
   for (const group of groups) {
     if (!usedGroups.has(group.id)) continue;
     chrome.contextMenus.create({
       id: `group_${group.id}`,
       parentId: "bs_parent",
       title: group.name,
-      contexts: ["selection"],
+      contexts: ctxs,
     });
     for (const engine of grouped[group.id]) {
       chrome.contextMenus.create({
         id: `search_${engine.id}`,
         parentId: `group_${group.id}`,
         title: engine.name,
-        contexts: ["selection"],
+        contexts: ctxs,
       });
     }
   }
 
-  // Separator between groups and ungrouped engines (if both exist)
   if (usedGroups.size > 0 && ungrouped.length > 0) {
     chrome.contextMenus.create({
       id: "bs_group_sep",
       parentId: "bs_parent",
       type: "separator",
-      contexts: ["selection"],
+      contexts: ctxs,
     });
   }
 
-  // Ungrouped engines
   for (const engine of ungrouped) {
     chrome.contextMenus.create({
       id: `search_${engine.id}`,
       parentId: "bs_parent",
       title: engine.name,
-      contexts: ["selection"],
+      contexts: ctxs,
     });
   }
 }
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (!info.selectionText) return;
+  const text = info.selectionText || info.linkUrl || "";
+  if (!text) return;
 
-  const query = encodeURIComponent(info.selectionText);
+  const query = encodeURIComponent(text);
   const openTab = (url, engineId) => {
     try { const u = new URL(url); if (!["http:", "https:"].includes(u.protocol)) return; } catch { return; }
     const isWindow = (settings.windowEngines || []).includes(engineId);
@@ -239,6 +248,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     const opts = { url, active: isFg, openerTabId: tab?.id };
     if (!isFg && settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
     chrome.tabs.create(opts);
+    if (!isFg) { bgTabCount++; updateBadge(); }
   };
 
   if (info.menuItemId === "search_all") {
@@ -264,13 +274,16 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
   } else if (msg.type === "modifierState") {
     shiftHeld = !!msg.shift;
   } else if (msg.type === "openTab") {
-    // Middle-click capture: open tab respecting force-background + site rules
     const bg = shouldForceBackground(msg.url);
     const tab = sender.tab;
     const opts = { url: msg.url, active: !bg };
     if (bg && settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
     if (tab) opts.openerTabId = tab.id;
     chrome.tabs.create(opts);
+    if (bg) { bgTabCount++; updateBadge(); }
+  } else if (msg.type === "resetBadge") {
+    bgTabCount = 0;
+    updateBadge();
   }
 });
 
@@ -361,10 +374,18 @@ chrome.omnibox.onInputEntered.addListener(async (text, disposition) => {
   const engine = getOmniboxEngine();
   if (!engine || !text.trim()) return;
   const url = engine.url.replace("%s", encodeURIComponent(text.trim()));
+
+  if (disposition === "currentTab") {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab) { chrome.tabs.update(tab.id, { url }); return; }
+  }
+
+  const fg = disposition === "newForegroundTab";
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  const opts = { url, active: false };
-  if (settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
+  const opts = { url, active: fg };
+  if (!fg && settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
   chrome.tabs.create(opts);
+  if (!fg) { bgTabCount++; updateBadge(); }
 });
 
 // ── Init ──
