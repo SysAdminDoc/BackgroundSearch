@@ -232,6 +232,28 @@
     border-color: var(--surface1);
   }
 
+  .top-engines {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+
+  .top-engines .stat-chip {
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--surface0);
+    color: var(--subtext0);
+    white-space: nowrap;
+  }
+
+  .top-engines .stat-chip .stat-count {
+    color: var(--blue);
+    font-weight: 700;
+    margin-left: 2px;
+  }
+
   .search-filter {
     margin-bottom: 8px;
   }
@@ -729,6 +751,7 @@
       <button class="btn-sm" id="importConfig">↓ Import</button>
     </div>
     <input type="file" id="importFile" accept=".json" style="display:none">
+    <div id="topEngines" class="top-engines" style="display:none"></div>
     <div class="search-filter">
       <input type="text" id="filterInput" placeholder="Filter engines...">
     </div>

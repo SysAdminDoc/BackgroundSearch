@@ -3,6 +3,19 @@
 
 let ENGINES = [];
 
+async function trackEngineUse(engineId) {
+  const { engineStats = {} } = await chrome.storage.local.get({ engineStats: {} });
+  const now = Date.now();
+  if (!engineStats[engineId]) engineStats[engineId] = [];
+  engineStats[engineId].push(now);
+  const weekAgo = now - 7 * 86400000;
+  for (const id of Object.keys(engineStats)) {
+    engineStats[id] = engineStats[id].filter((t) => t > weekAgo);
+    if (engineStats[id].length === 0) delete engineStats[id];
+  }
+  await chrome.storage.local.set({ engineStats });
+}
+
 const SCHEMA_VERSION = 1;
 
 const DEFAULTS = {
@@ -343,6 +356,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         const created = await chrome.tabs.create(opts);
         tabIds.push(created.id);
         if (!isFg) { bgTabCount++; updateBadge(); }
+        trackEngineUse(eng.id);
       }
       i += BATCH;
       if (i < enabled.length) { setTimeout(openBatch, 100); return; }
@@ -363,6 +377,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (!engine) return;
 
   openTab(engine);
+  trackEngineUse(engine.id);
 });
 
 // ── Settings Sync ──

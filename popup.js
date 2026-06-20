@@ -627,6 +627,24 @@ document.getElementById("newGroupName")?.addEventListener("keydown", (e) => {
   if (e.key === "Enter") addGroup();
 });
 
+async function renderTopEngines() {
+  const { engineStats = {} } = await chrome.storage.local.get({ engineStats: {} });
+  const all = getOrderedEngines();
+  const sorted = Object.entries(engineStats)
+    .map(([id, times]) => ({ id, count: times.length }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  const el = document.getElementById("topEngines");
+  if (sorted.length === 0) { el.style.display = "none"; return; }
+  el.style.display = "flex";
+  el.innerHTML = sorted.map((s) => {
+    const engine = all.find((e) => e.id === s.id);
+    const name = engine ? escHtml(engine.name) : s.id;
+    return `<span class="stat-chip">${name}<span class="stat-count">${s.count}</span></span>`;
+  }).join("");
+}
+
 load().then(() => {
   chrome.runtime.sendMessage({ type: "resetBadge" }).catch(() => {});
   if (!settings.searchEnabled) {
@@ -635,4 +653,5 @@ load().then(() => {
   }
   renderGroups();
   renderSiteRules();
+  renderTopEngines();
 });
