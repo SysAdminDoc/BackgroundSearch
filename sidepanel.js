@@ -1,14 +1,16 @@
-// BackgroundSearch — Side Panel
+﻿// BackgroundSearch â€” Side Panel
+
+const api = globalThis.browser || globalThis.chrome;
 
 let ENGINES = [];
 let settings = {};
 const MAX_HISTORY = 50;
 
 async function load() {
-  const resp = await fetch(chrome.runtime.getURL("engines.json"));
+  const resp = await fetch(api.runtime.getURL("engines.json"));
   ENGINES = await resp.json();
 
-  const data = await chrome.storage.sync.get({
+  const data = await api.storage.sync.get({
     enabledEngines: ["google"],
     customEngines: [],
     engineOrder: [],
@@ -20,7 +22,7 @@ async function load() {
   const select = document.getElementById("engineSelect");
   const all = getAllEngines();
   const enabled = all.filter((e) => settings.enabledEngines.includes(e.id));
-  select.innerHTML = "";
+  select.replaceChildren();
   for (const engine of enabled) {
     const opt = document.createElement("option");
     opt.value = engine.id;
@@ -51,31 +53,34 @@ async function doSearch(query, engineId) {
   if (!engine) return;
 
   const url = engine.url.replace("%s", encodeURIComponent(query.trim()));
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const [tab] = await api.tabs.query({ active: true, currentWindow: true });
   const isFg = (settings.fgEngines || []).includes(engine.id);
   const opts = { url, active: isFg };
   if (!isFg && settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
   if (tab) opts.openerTabId = tab.id;
-  await chrome.tabs.create(opts);
+  await api.tabs.create(opts);
 
   await saveHistory(query.trim(), engine.name);
   renderHistory();
 }
 
 async function saveHistory(query, engineName) {
-  const { searchHistory = [] } = await chrome.storage.local.get({ searchHistory: [] });
+  const { searchHistory = [] } = await api.storage.local.get({ searchHistory: [] });
   searchHistory.unshift({ query, engine: engineName, time: new Date().toISOString() });
   if (searchHistory.length > MAX_HISTORY) searchHistory.length = MAX_HISTORY;
-  await chrome.storage.local.set({ searchHistory });
+  await api.storage.local.set({ searchHistory });
 }
 
 async function renderHistory() {
-  const { searchHistory = [] } = await chrome.storage.local.get({ searchHistory: [] });
+  const { searchHistory = [] } = await api.storage.local.get({ searchHistory: [] });
   const list = document.getElementById("historyList");
-  list.innerHTML = "";
+  list.replaceChildren();
 
   if (searchHistory.length === 0) {
-    list.innerHTML = '<div class="empty">No recent searches</div>';
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "No recent searches";
+    list.appendChild(empty);
     return;
   }
 
@@ -83,11 +88,16 @@ async function renderHistory() {
     const row = document.createElement("div");
     row.className = "history-item";
     const ago = timeAgo(item.time);
-    row.innerHTML = `
-      <span class="history-query">${escHtml(item.query)}</span>
-      <span class="history-engine">${escHtml(item.engine)}</span>
-      <span class="history-time">${ago}</span>
-    `;
+    const query = document.createElement("span");
+    query.className = "history-query";
+    query.textContent = item.query;
+    const engine = document.createElement("span");
+    engine.className = "history-engine";
+    engine.textContent = item.engine;
+    const time = document.createElement("span");
+    time.className = "history-time";
+    time.textContent = ago;
+    row.append(query, engine, time);
     row.addEventListener("click", () => {
       document.getElementById("query").value = item.query;
     });
@@ -122,7 +132,7 @@ document.getElementById("query").addEventListener("keydown", (e) => {
 });
 
 document.getElementById("clearHistory").addEventListener("click", async () => {
-  await chrome.storage.local.set({ searchHistory: [] });
+  await api.storage.local.set({ searchHistory: [] });
   renderHistory();
 });
 

@@ -1,10 +1,12 @@
-// BackgroundSearch v2.6.0
+// BackgroundSearch v2.7.0
 // Forces new tabs to open in the background + custom context menu search.
+
+const api = globalThis.browser || globalThis.chrome;
 
 let ENGINES = [];
 
 async function trackEngineUse(engineId) {
-  const { engineStats = {} } = await chrome.storage.local.get({ engineStats: {} });
+  const { engineStats = {} } = await api.storage.local.get({ engineStats: {} });
   const now = Date.now();
   if (!engineStats[engineId]) engineStats[engineId] = [];
   engineStats[engineId].push(now);
@@ -13,7 +15,7 @@ async function trackEngineUse(engineId) {
     engineStats[id] = engineStats[id].filter((t) => t > weekAgo);
     if (engineStats[id].length === 0) delete engineStats[id];
   }
-  await chrome.storage.local.set({ engineStats });
+  await api.storage.local.set({ engineStats });
 }
 
 const SCHEMA_VERSION = 1;
@@ -43,16 +45,33 @@ let recentlyCreatedTabs = new Set();
 let shiftHeld = false;
 let bgTabCount = 0;
 
-// ── Badge ──
+// â”€â”€ Badge â”€â”€
 
 function updateBadge() {
   const text = bgTabCount > 0 ? String(bgTabCount) : "";
-  chrome.action.setBadgeText({ text });
-  chrome.action.setBadgeBackgroundColor({ color: "#89b4fa" });
-  chrome.action.setBadgeTextColor({ color: "#1e1e2e" });
+  callOptional(api.action, "setBadgeText", { text });
+  callOptional(api.action, "setBadgeBackgroundColor", { color: "#89b4fa" });
+  callOptional(api.action, "setBadgeTextColor", { color: "#1e1e2e" });
 }
 
-// ── Site Rule Matching ──
+function callOptional(target, method, args) {
+  if (!target?.[method]) return;
+  try {
+    const result = target[method](args);
+    if (result?.catch) result.catch(() => {});
+  } catch {}
+}
+
+async function readClipboardText(tabId) {
+  if (!api.scripting?.executeScript) return "";
+  const results = await api.scripting.executeScript({
+    target: { tabId },
+    func: () => navigator.clipboard.readText(),
+  });
+  return results?.[0]?.result || "";
+}
+
+// â”€â”€ Site Rule Matching â”€â”€
 
 let compiledRules = [];
 
@@ -81,7 +100,7 @@ function matchSiteRule(url) {
   return null;
 }
 
-// ── Background Tab Logic ──
+// â”€â”€ Background Tab Logic â”€â”€
 
 function shouldForceBackground(url) {
   const ruleAction = matchSiteRule(url);
@@ -91,15 +110,15 @@ function shouldForceBackground(url) {
   return settings.bgTabsEnabled !== shiftHeld;
 }
 
-chrome.tabs.onActivated.addListener((activeInfo) => {
+api.tabs.onActivated.addListener((activeInfo) => {
   if (recentlyCreatedTabs.has(activeInfo.tabId)) {
     recentlyCreatedTabs.delete(activeInfo.tabId);
     const switchBack = () => {
       if (lastActiveTabId !== null) {
-        setTimeout(() => chrome.tabs.update(lastActiveTabId, { active: true }).catch(() => {}), 50);
+        setTimeout(() => api.tabs.update(lastActiveTabId, { active: true }).catch(() => {}), 50);
       }
     };
-    chrome.tabs.get(activeInfo.tabId).then((tab) => {
+    api.tabs.get(activeInfo.tabId).then((tab) => {
       if (shouldForceBackground(tab?.pendingUrl || tab?.url)) switchBack();
     }).catch(() => {
       if (shouldForceBackground(null)) switchBack();
@@ -109,7 +128,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   }
 });
 
-chrome.tabs.onCreated.addListener((tab) => {
+api.tabs.onCreated.addListener((tab) => {
   const url = tab.pendingUrl || tab.url;
   if (shouldForceBackground(url) && tab.active) {
     recentlyCreatedTabs.add(tab.id);
@@ -117,12 +136,12 @@ chrome.tabs.onCreated.addListener((tab) => {
   }
 });
 
-chrome.tabs.onRemoved.addListener((tabId) => {
+api.tabs.onRemoved.addListener((tabId) => {
   recentlyCreatedTabs.delete(tabId);
   if (tabId === lastActiveTabId) lastActiveTabId = null;
 });
 
-// ── Context Menu Search ──
+// â”€â”€ Context Menu Search â”€â”€
 
 function getAllEngines() {
   const all = [...ENGINES, ...(settings.customEngines || [])];
@@ -161,7 +180,7 @@ async function buildContextMenus() {
   if (newConfig === currentMenuConfig) return;
   currentMenuConfig = newConfig;
 
-  await chrome.contextMenus.removeAll();
+  await api.contextMenus.removeAll();
 
   if (enabled.length === 0 && !settings.searchEnabled) return;
 
@@ -172,13 +191,13 @@ async function buildContextMenus() {
       { id: "img_tineye", name: "TinEye", url: "https://tineye.com/search?url=%s" },
       { id: "img_bing",   name: "Bing",   url: "https://www.bing.com/images/search?view=detailv2&iss=sbi&q=imgurl:%s" },
     ];
-    chrome.contextMenus.create({ id: "bs_img_parent", title: "Reverse image search", contexts: ["image"] });
+    api.contextMenus.create({ id: "bs_img_parent", title: "Reverse image search", contexts: ["image"] });
     for (const eng of REVERSE_ENGINES) {
-      chrome.contextMenus.create({ id: eng.id, parentId: "bs_img_parent", title: eng.name, contexts: ["image"] });
+      api.contextMenus.create({ id: eng.id, parentId: "bs_img_parent", title: eng.name, contexts: ["image"] });
     }
   }
 
-  chrome.contextMenus.create({
+  api.contextMenus.create({
     id: "bs_clipboard",
     title: "Search clipboard text",
     contexts: ["page"],
@@ -189,7 +208,7 @@ async function buildContextMenus() {
   const ctxs = ["selection", "link"];
 
   if (enabled.length === 1) {
-    chrome.contextMenus.create({
+    api.contextMenus.create({
       id: `search_${enabled[0].id}`,
       title: `Search ${enabled[0].name} for "%s"`,
       contexts: ctxs,
@@ -197,20 +216,20 @@ async function buildContextMenus() {
     return;
   }
 
-  chrome.contextMenus.create({
+  api.contextMenus.create({
     id: "bs_parent",
     title: `BackgroundSearch "%s"`,
     contexts: ctxs,
   });
 
   if (settings.searchAll) {
-    chrome.contextMenus.create({
+    api.contextMenus.create({
       id: "search_all",
       parentId: "bs_parent",
       title: `Search all ${enabled.length} engines`,
       contexts: ctxs,
     });
-    chrome.contextMenus.create({
+    api.contextMenus.create({
       id: "bs_sep",
       parentId: "bs_parent",
       type: "separator",
@@ -236,14 +255,14 @@ async function buildContextMenus() {
 
   for (const group of groups) {
     if (!usedGroups.has(group.id)) continue;
-    chrome.contextMenus.create({
+    api.contextMenus.create({
       id: `group_${group.id}`,
       parentId: "bs_parent",
       title: group.name,
       contexts: ctxs,
     });
     for (const engine of grouped[group.id]) {
-      chrome.contextMenus.create({
+      api.contextMenus.create({
         id: `search_${engine.id}`,
         parentId: `group_${group.id}`,
         title: engine.name,
@@ -253,7 +272,7 @@ async function buildContextMenus() {
   }
 
   if (usedGroups.size > 0 && ungrouped.length > 0) {
-    chrome.contextMenus.create({
+    api.contextMenus.create({
       id: "bs_group_sep",
       parentId: "bs_parent",
       type: "separator",
@@ -262,7 +281,7 @@ async function buildContextMenus() {
   }
 
   for (const engine of ungrouped) {
-    chrome.contextMenus.create({
+    api.contextMenus.create({
       id: `search_${engine.id}`,
       parentId: "bs_parent",
       title: engine.name,
@@ -283,21 +302,17 @@ function expandTemplate(template, query, tab) {
   return url;
 }
 
-chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+api.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === "bs_clipboard" && tab?.id) {
     try {
-      const results = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: () => navigator.clipboard.readText(),
-      });
-      const clipText = results?.[0]?.result;
+      const clipText = await readClipboardText(tab.id);
       if (!clipText) return;
       const engine = getOmniboxEngine();
       if (!engine) return;
       const url = engine.url.replace("%s", encodeURIComponent(clipText));
       const opts = { url, active: false, openerTabId: tab.id };
       if (settings.tabPlacement !== "end") opts.index = tab.index + 1;
-      chrome.tabs.create(opts);
+      api.tabs.create(opts);
       bgTabCount++; updateBadge();
     } catch {}
     return;
@@ -315,7 +330,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       const url = tmpl.replace("%s", encodeURIComponent(info.srcUrl));
       const opts = { url, active: false, openerTabId: tab?.id };
       if (settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
-      chrome.tabs.create(opts);
+      api.tabs.create(opts);
       bgTabCount++; updateBadge();
     }
     return;
@@ -333,18 +348,18 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     if (engine.method === "POST") {
       const postBody = (engine.postParams || "q=%s").replace("%s", query);
       const hash = `action=${encodeURIComponent(url)}&${postBody}`;
-      navUrl = chrome.runtime.getURL("post.html") + "#" + hash;
+      navUrl = api.runtime.getURL("post.html") + "#" + hash;
     }
 
     const isWindow = (settings.windowEngines || []).includes(engine.id);
     if (isWindow) {
-      chrome.windows.create({ url: navUrl, focused: true });
+      api.windows.create({ url: navUrl, focused: true });
       return;
     }
     const isFg = (settings.fgEngines || []).includes(engine.id);
     const opts = { url: navUrl, active: isFg, openerTabId: tab?.id };
     if (!isFg && settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
-    chrome.tabs.create(opts);
+    api.tabs.create(opts);
     if (!isFg) { bgTabCount++; updateBadge(); }
   };
 
@@ -361,23 +376,23 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         let navUrl = url;
         if (eng.method === "POST") {
           const postBody = expandTemplate(eng.postParams || "q=%s", query, tab);
-          navUrl = chrome.runtime.getURL("post.html") + "#action=" + encodeURIComponent(url) + "&" + postBody;
+          navUrl = api.runtime.getURL("post.html") + "#action=" + encodeURIComponent(url) + "&" + postBody;
         }
         const isFg = (settings.fgEngines || []).includes(eng.id);
         const opts = { url: navUrl, active: isFg, openerTabId: tab?.id };
         if (!isFg && settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
-        const created = await chrome.tabs.create(opts);
+        const created = await api.tabs.create(opts);
         tabIds.push(created.id);
         if (!isFg) { bgTabCount++; updateBadge(); }
         trackEngineUse(eng.id);
       }
       i += BATCH;
       if (i < enabled.length) { setTimeout(openBatch, 100); return; }
-      if (tabIds.length > 1) {
+      if (tabIds.length > 1 && api.tabs.group && api.tabGroups?.update) {
         try {
-          const groupId = await chrome.tabs.group({ tabIds });
-          const label = text.length > 20 ? text.slice(0, 20) + "…" : text;
-          await chrome.tabGroups.update(groupId, { title: `BS: ${label}`, color: "blue" });
+          const groupId = await api.tabs.group({ tabIds });
+          const label = text.length > 20 ? text.slice(0, 20) + "â€¦" : text;
+          await api.tabGroups.update(groupId, { title: `BS: ${label}`, color: "blue" });
         } catch {}
       }
     };
@@ -393,9 +408,9 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   trackEngineUse(engine.id);
 });
 
-// ── Settings Sync ──
+// â”€â”€ Settings Sync â”€â”€
 
-chrome.runtime.onMessage.addListener((msg, sender) => {
+api.runtime.onMessage.addListener((msg, sender) => {
   if (msg.type === "settingsChanged") {
     loadSettings();
   } else if (msg.type === "modifierState") {
@@ -406,14 +421,14 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
     const opts = { url: msg.url, active: !bg };
     if (bg && settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
     if (tab) opts.openerTabId = tab.id;
-    chrome.tabs.create(opts);
+    api.tabs.create(opts);
     if (bg) { bgTabCount++; updateBadge(); }
   } else if (msg.type === "quickMenuSearch") {
     const tab = sender.tab;
     const opts = { url: msg.url, active: false };
     if (settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
     if (tab) opts.openerTabId = tab.id;
-    chrome.tabs.create(opts);
+    api.tabs.create(opts);
     bgTabCount++; updateBadge();
     trackEngineUse(msg.engineId);
   } else if (msg.type === "resetBadge") {
@@ -423,7 +438,7 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
 });
 
 async function migrateSettings() {
-  const data = await chrome.storage.sync.get(null);
+  const data = await api.storage.sync.get(null);
   const version = data._schemaVersion || 0;
   if (version >= SCHEMA_VERSION) return;
 
@@ -432,24 +447,32 @@ async function migrateSettings() {
     if (key in DEFAULTS) merged[key] = data[key];
   }
   merged._schemaVersion = SCHEMA_VERSION;
-  await chrome.storage.sync.set(merged);
+  await api.storage.sync.set(merged);
 }
 
 async function loadSettings() {
-  const data = await chrome.storage.sync.get(DEFAULTS);
+  const data = await api.storage.sync.get(DEFAULTS);
   settings = data;
   compileRules();
   await buildContextMenus();
   await updateIcon();
 }
 
-// ── Icon Drawing ──
+// â”€â”€ Icon Drawing â”€â”€
 
 async function updateIcon() {
+  const active = settings.bgTabsEnabled || settings.searchEnabled;
+  if (!api.action) return;
+  if (typeof OffscreenCanvas === "undefined") {
+    callOptional(api.action, "setTitle", {
+      title: `BackgroundSearch${active ? "" : " (disabled)"}`,
+    });
+    return;
+  }
+
   const canvas = new OffscreenCanvas(128, 128);
   const ctx = canvas.getContext("2d");
 
-  const active = settings.bgTabsEnabled || settings.searchEnabled;
   const color = active ? "#89b4fa" : "#585b70";
 
   // Magnifying glass circle (transparent background)
@@ -475,13 +498,13 @@ async function updateIcon() {
     imageData[size] = sc.getImageData(0, 0, size, size);
   }
 
-  await chrome.action.setIcon({ imageData });
-  await chrome.action.setTitle({
+  if (api.action.setIcon) await api.action.setIcon({ imageData });
+  if (api.action.setTitle) await api.action.setTitle({
     title: `BackgroundSearch${active ? "" : " (disabled)"}`,
   });
 }
 
-// ── Omnibox ──
+// â”€â”€ Omnibox â”€â”€
 
 function escXml(s) {
   return String(s)
@@ -513,22 +536,22 @@ function parseBang(text) {
   return engine ? { engine, query } : null;
 }
 
-chrome.omnibox.onInputChanged.addListener((text, suggest) => {
+api.omnibox.onInputChanged.addListener((text, suggest) => {
   const bang = parseBang(text);
   if (bang) {
-    chrome.omnibox.setDefaultSuggestion({
+    api.omnibox.setDefaultSuggestion({
       description: `Search <dim>${escXml(bang.engine.name)}</dim> for <match>${escXml(bang.query)}</match>`,
     });
     return;
   }
   const engine = getOmniboxEngine();
   if (!engine) return;
-  chrome.omnibox.setDefaultSuggestion({
+  api.omnibox.setDefaultSuggestion({
     description: `Search <dim>${escXml(engine.name)}</dim> for <match>${escXml(text)}</match>`,
   });
 });
 
-chrome.omnibox.onInputEntered.addListener(async (text, disposition) => {
+api.omnibox.onInputEntered.addListener(async (text, disposition) => {
   const bang = parseBang(text.trim());
   const engine = bang ? bang.engine : getOmniboxEngine();
   const query = bang ? bang.query : text.trim();
@@ -537,30 +560,35 @@ chrome.omnibox.onInputEntered.addListener(async (text, disposition) => {
   trackEngineUse(engine.id);
 
   if (disposition === "currentTab") {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab) { chrome.tabs.update(tab.id, { url }); return; }
+    const [tab] = await api.tabs.query({ active: true, currentWindow: true });
+    if (tab) { api.tabs.update(tab.id, { url }); return; }
   }
 
   const fg = disposition === "newForegroundTab";
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const [tab] = await api.tabs.query({ active: true, currentWindow: true });
   const opts = { url, active: fg };
   if (!fg && settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
-  chrome.tabs.create(opts);
+  api.tabs.create(opts);
   if (!fg) { bgTabCount++; updateBadge(); }
 });
 
-// ── Init ──
+// â”€â”€ Init â”€â”€
 
 async function init(doMigrate) {
-  const resp = await fetch(chrome.runtime.getURL("engines.json"));
+  const resp = await fetch(api.runtime.getURL("engines.json"));
   ENGINES = await resp.json();
   if (doMigrate) await migrateSettings();
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const [tab] = await api.tabs.query({ active: true, currentWindow: true });
     if (tab) lastActiveTabId = tab.id;
   } catch {}
   await loadSettings();
 }
 
-chrome.runtime.onStartup.addListener(() => init(false));
-chrome.runtime.onInstalled.addListener((details) => init(details.reason === "update" || details.reason === "install"));
+function runInit(doMigrate) {
+  init(doMigrate).catch(() => {});
+}
+
+api.runtime.onStartup.addListener(() => runInit(false));
+api.runtime.onInstalled.addListener((details) => runInit(details.reason === "update" || details.reason === "install"));
+runInit(false);

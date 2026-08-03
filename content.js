@@ -1,33 +1,43 @@
-// BackgroundSearch — Content Script
+﻿// BackgroundSearch â€” Content Script
 // Conditionally registers listeners based on enabled features.
 
 (function () {
+  const api = globalThis.browser || globalThis.chrome;
+
   let shiftHeld = false;
+  let shiftTrackingStarted = false;
+  let middleClickCaptureStarted = false;
 
   function startShiftTracking() {
+    if (shiftTrackingStarted) return;
+    shiftTrackingStarted = true;
+
     document.addEventListener("keydown", (e) => {
       if (e.key === "Shift" && !shiftHeld) {
         shiftHeld = true;
-        chrome.runtime.sendMessage({ type: "modifierState", shift: true }).catch(() => {});
+        api.runtime.sendMessage({ type: "modifierState", shift: true }).catch(() => {});
       }
     }, true);
 
     document.addEventListener("keyup", (e) => {
       if (e.key === "Shift" && shiftHeld) {
         shiftHeld = false;
-        chrome.runtime.sendMessage({ type: "modifierState", shift: false }).catch(() => {});
+        api.runtime.sendMessage({ type: "modifierState", shift: false }).catch(() => {});
       }
     }, true);
 
     window.addEventListener("blur", () => {
       if (shiftHeld) {
         shiftHeld = false;
-        chrome.runtime.sendMessage({ type: "modifierState", shift: false }).catch(() => {});
+        api.runtime.sendMessage({ type: "modifierState", shift: false }).catch(() => {});
       }
     });
   }
 
   function startMiddleClickCapture() {
+    if (middleClickCaptureStarted) return;
+    middleClickCaptureStarted = true;
+
     document.addEventListener("auxclick", (e) => {
       if (e.button !== 1) return;
       let link = e.target;
@@ -35,17 +45,21 @@
       if (!link || !link.href) return;
       e.preventDefault();
       e.stopPropagation();
-      chrome.runtime.sendMessage({ type: "openTab", url: link.href }).catch(() => {});
+      api.runtime.sendMessage({ type: "openTab", url: link.href }).catch(() => {});
     }, true);
   }
 
-  chrome.storage.sync.get({ bgTabsEnabled: true, middleClickCapture: false }, (data) => {
+  async function init() {
+    const data = await api.storage.sync.get({ bgTabsEnabled: true, middleClickCapture: false });
     if (data.bgTabsEnabled) startShiftTracking();
     if (data.middleClickCapture) startMiddleClickCapture();
-  });
+  }
 
-  chrome.storage.onChanged.addListener((changes) => {
+  api.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName && areaName !== "sync") return;
     if (changes.bgTabsEnabled?.newValue && !shiftHeld) startShiftTracking();
     if (changes.middleClickCapture?.newValue) startMiddleClickCapture();
   });
+
+  init().catch(() => {});
 })();

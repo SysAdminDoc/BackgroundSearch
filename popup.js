@@ -1,4 +1,6 @@
-// BackgroundSearch v2.6.0 — Popup Settings
+// BackgroundSearch v2.7.0 â€” Popup Settings
+
+const api = globalThis.browser || globalThis.chrome;
 
 let ENGINES = [];
 
@@ -28,11 +30,15 @@ function applyTheme(mode) {
   document.documentElement.dataset.theme = mode || "system";
 }
 
+function notifySettingsChanged() {
+  api.runtime.sendMessage({ type: "settingsChanged" }).catch(() => {});
+}
+
 async function load() {
-  const resp = await fetch(chrome.runtime.getURL("engines.json"));
+  const resp = await fetch(api.runtime.getURL("engines.json"));
   ENGINES = await resp.json();
 
-  const data = await chrome.storage.sync.get(DEFAULTS);
+  const data = await api.storage.sync.get(DEFAULTS);
   settings = data;
 
   document.getElementById("bgTabsEnabled").checked = settings.bgTabsEnabled;
@@ -79,7 +85,7 @@ function getOrderedEngines() {
 
 function renderEngines(filter = "") {
   const list = document.getElementById("engineList");
-  list.innerHTML = "";
+  list.replaceChildren();
   const lower = filter.toLowerCase();
   const allEngines = getOrderedEngines();
   const groups = settings.engineGroups || [];
@@ -93,59 +99,105 @@ function renderEngines(filter = "") {
     row.draggable = !lower; // disable drag while filtering
     row.dataset.engineId = engine.id;
 
-    const initial = escHtml(engine.name.charAt(0));
-    const name = escHtml(engine.name);
-    const checked = settings.enabledEngines.includes(engine.id) ? "checked" : "";
+    const initial = engine.name.charAt(0);
     const isCustom = engine.id.startsWith("custom_");
     const isFg = (settings.fgEngines || []).includes(engine.id);
     const isWin = (settings.windowEngines || []).includes(engine.id);
     const targetLabel = isWin ? "WIN" : isFg ? "FG" : "BG";
     const badgeClass = isWin ? "bg-badge win" : isFg ? "bg-badge fg" : "bg-badge";
 
-    // Group selector (only shown when groups exist)
-    let groupHtml = "";
-    if (groups.length > 0) {
-      const curGroup = groupMap[engine.id] || "";
-      let opts = `<option value="">—</option>`;
-      for (const g of groups) {
-        const sel = g.id === curGroup ? "selected" : "";
-        opts += `<option value="${escHtml(g.id)}" ${sel}>${escHtml(g.name)}</option>`;
-      }
-      groupHtml = `<select class="group-select" data-engine="${engine.id}" title="Assign group">${opts}</select>`;
+    const faviconSrc = getFaviconUrl(engine.url);
+
+    const toggleLabel = document.createElement("div");
+    toggleLabel.className = "toggle-label";
+
+    const fallbackIcon = document.createElement("div");
+    fallbackIcon.className = "icon";
+    fallbackIcon.style.background = engine.color || "#45475a";
+    fallbackIcon.textContent = initial;
+
+    if (faviconSrc) {
+      const img = document.createElement("img");
+      img.className = "icon-img";
+      img.src = faviconSrc;
+      img.width = 20;
+      img.height = 20;
+      img.style.borderRadius = "4px";
+      fallbackIcon.style.display = "none";
+      img.addEventListener("error", () => {
+        img.style.display = "none";
+        fallbackIcon.style.display = "flex";
+      }, { once: true });
+      toggleLabel.append(img, fallbackIcon);
+    } else {
+      toggleLabel.appendChild(fallbackIcon);
     }
 
-    const faviconSrc = getFaviconUrl(engine.url);
-    const iconHtml = faviconSrc
-      ? `<img class="icon-img" src="${faviconSrc}" width="20" height="20" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" style="border-radius:4px"><div class="icon" style="background:${engine.color};display:none">${initial}</div>`
-      : `<div class="icon" style="background:${engine.color}">${initial}</div>`;
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = engine.name;
+    toggleLabel.appendChild(nameSpan);
+    row.appendChild(toggleLabel);
 
-    row.innerHTML = `
-      <div class="toggle-label">
-        ${iconHtml}
-        <span>${name}</span>
-      </div>
-      ${groupHtml}
-      <button class="${badgeClass}" title="Cycle: BG / FG / Window" data-engine="${engine.id}">${targetLabel}</button>
-      ${isCustom ? `<button class="delete-btn" title="Remove engine" aria-label="Remove ${name}">×</button>` : ""}
-      <label class="toggle-switch">
-        <input type="checkbox" data-engine="${engine.id}" ${checked}>
-        <div class="toggle-track"></div>
-        <div class="toggle-thumb"></div>
-      </label>
-    `;
+    let groupSelect = null;
+    if (groups.length > 0) {
+      groupSelect = document.createElement("select");
+      groupSelect.className = "group-select";
+      groupSelect.dataset.engine = engine.id;
+      groupSelect.title = "Assign group";
+      const emptyOption = document.createElement("option");
+      emptyOption.value = "";
+      emptyOption.textContent = "-";
+      groupSelect.appendChild(emptyOption);
+      const curGroup = groupMap[engine.id] || "";
+      for (const g of groups) {
+        const option = document.createElement("option");
+        option.value = g.id;
+        option.textContent = g.name;
+        option.selected = g.id === curGroup;
+        groupSelect.appendChild(option);
+      }
+      row.appendChild(groupSelect);
+    }
 
-    row.querySelector(".bg-badge").addEventListener("click", () => cycleEngineTarget(engine.id));
+    const badge = document.createElement("button");
+    badge.className = badgeClass;
+    badge.title = "Cycle: BG / FG / Window";
+    badge.dataset.engine = engine.id;
+    badge.textContent = targetLabel;
+    row.appendChild(badge);
+
+    let deleteBtn = null;
+    if (isCustom) {
+      deleteBtn = document.createElement("button");
+      deleteBtn.className = "delete-btn";
+      deleteBtn.title = "Remove engine";
+      deleteBtn.setAttribute("aria-label", `Remove ${engine.name}`);
+      deleteBtn.textContent = "x";
+      row.appendChild(deleteBtn);
+    }
+
+    const toggleSwitch = document.createElement("label");
+    toggleSwitch.className = "toggle-switch";
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.dataset.engine = engine.id;
+    checkbox.checked = settings.enabledEngines.includes(engine.id);
+    const track = document.createElement("div");
+    track.className = "toggle-track";
+    const thumb = document.createElement("div");
+    thumb.className = "toggle-thumb";
+    toggleSwitch.append(checkbox, track, thumb);
+    row.appendChild(toggleSwitch);
+
+    badge.addEventListener("click", () => cycleEngineTarget(engine.id));
 
     if (isCustom) {
-      row.querySelector(".delete-btn").addEventListener("click", () => deleteCustomEngine(engine.id));
+      deleteBtn.addEventListener("click", () => deleteCustomEngine(engine.id));
     }
 
-    const groupSelect = row.querySelector(".group-select");
-    if (groupSelect) {
-      groupSelect.addEventListener("change", (e) => assignEngineGroup(engine.id, e.target.value));
-    }
+    if (groupSelect) groupSelect.addEventListener("change", (e) => assignEngineGroup(engine.id, e.target.value));
 
-    row.querySelector("input").addEventListener("change", (e) => {
+    checkbox.addEventListener("change", (e) => {
       toggleEngine(engine.id, e.target.checked);
     });
 
@@ -187,19 +239,19 @@ const SYNC_WARN_THRESHOLD = 0.8;
 
 async function save() {
   try {
-    await chrome.storage.sync.set(settings);
+    await api.storage.sync.set(settings);
   } catch (err) {
     if (err?.message?.includes("QUOTA")) {
-      await chrome.storage.local.set(settings);
-      showToast("Storage full — saved locally only", true);
+      await api.storage.local.set(settings);
+      showToast("Storage full â€” saved locally only", true);
     }
     return;
   }
-  const used = await chrome.storage.sync.getBytesInUse(null);
+  const used = await api.storage.sync.getBytesInUse(null);
   if (used > SYNC_QUOTA * SYNC_WARN_THRESHOLD) {
     showToast(`Storage ${Math.round(used / SYNC_QUOTA * 100)}% full`, true);
   }
-  chrome.runtime.sendMessage({ type: "settingsChanged" });
+  notifySettingsChanged();
 }
 
 document.getElementById("bgTabsEnabled").addEventListener("change", async (e) => {
@@ -231,7 +283,7 @@ document.getElementById("disableAll").addEventListener("click", async () => {
   await save();
 });
 
-// ── Search All & Tab Placement ──
+// â”€â”€ Search All & Tab Placement â”€â”€
 
 document.getElementById("searchAll").addEventListener("change", async (e) => {
   settings.searchAll = e.target.checked;
@@ -257,7 +309,7 @@ document.querySelectorAll("#tabPlacementCtrl .seg-btn").forEach((btn) => {
   });
 });
 
-// ── Theme ──
+// â”€â”€ Theme â”€â”€
 
 document.querySelectorAll("#themeCtrl .seg-btn").forEach((btn) => {
   btn.addEventListener("click", async () => {
@@ -269,7 +321,7 @@ document.querySelectorAll("#themeCtrl .seg-btn").forEach((btn) => {
   });
 });
 
-// ── Custom Engines ──
+// â”€â”€ Custom Engines â”€â”€
 
 const SAFE_PROTOCOLS = ["http:", "https:"];
 const VALID_SETTINGS_KEYS = new Set(Object.keys(DEFAULTS));
@@ -437,7 +489,7 @@ document.getElementById("newEngineUrl").addEventListener("input", (e) => {
   e.target.style.borderColor = "";
 });
 
-// ── Engine Target Cycle (BG -> FG -> WIN -> BG) ──
+// â”€â”€ Engine Target Cycle (BG -> FG -> WIN -> BG) â”€â”€
 
 async function cycleEngineTarget(id) {
   const fgEngines = settings.fgEngines || [];
@@ -460,7 +512,7 @@ async function cycleEngineTarget(id) {
   renderEngines(document.getElementById("filterInput").value);
 }
 
-// ── Drag-to-Reorder ──
+// â”€â”€ Drag-to-Reorder â”€â”€
 
 async function reorderEngine(fromId, toId) {
   const ordered = getOrderedEngines().map((e) => e.id);
@@ -474,12 +526,12 @@ async function reorderEngine(fromId, toId) {
   renderEngines(document.getElementById("filterInput").value);
 }
 
-// ── Site Rules ──
+// â”€â”€ Site Rules â”€â”€
 
 function renderSiteRules() {
   const list = document.getElementById("siteRuleList");
   if (!list) return;
-  list.innerHTML = "";
+  list.replaceChildren();
   const rules = settings.siteRules || [];
   for (let i = 0; i < rules.length; i++) {
     const rule = rules[i];
@@ -487,14 +539,24 @@ function renderSiteRules() {
     row.className = "rule-row";
     const actionLabel = rule.action === "fg" ? "FG" : rule.action === "bg" ? "BG" : "DEF";
     const actionClass = rule.action === "fg" ? "fg" : rule.action === "bg" ? "bg" : "default";
-    row.innerHTML = `
-      <span class="rule-pattern" title="${escHtml(rule.pattern)}">${escHtml(rule.pattern)}</span>
-      <span class="rule-type-badge">${escHtml(rule.type)}</span>
-      <span class="rule-action-badge ${actionClass}">${actionLabel}</span>
-      <button class="delete-btn" title="Remove rule" aria-label="Remove rule">×</button>
-    `;
+    const pattern = document.createElement("span");
+    pattern.className = "rule-pattern";
+    pattern.title = rule.pattern;
+    pattern.textContent = rule.pattern;
+    const type = document.createElement("span");
+    type.className = "rule-type-badge";
+    type.textContent = rule.type;
+    const action = document.createElement("span");
+    action.className = `rule-action-badge ${actionClass}`;
+    action.textContent = actionLabel;
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "delete-btn";
+    deleteBtn.title = "Remove rule";
+    deleteBtn.setAttribute("aria-label", "Remove rule");
+    deleteBtn.textContent = "x";
+    row.append(pattern, type, action, deleteBtn);
     const idx = i;
-    row.querySelector(".delete-btn").addEventListener("click", () => deleteSiteRule(idx));
+    deleteBtn.addEventListener("click", () => deleteSiteRule(idx));
     list.appendChild(row);
   }
 }
@@ -533,7 +595,7 @@ document.getElementById("newRulePattern")?.addEventListener("keydown", (e) => {
   if (e.key === "Enter") addSiteRule();
 });
 
-// ── Engine Groups ──
+// â”€â”€ Engine Groups â”€â”€
 
 async function assignEngineGroup(engineId, groupId) {
   if (!settings.engineGroupMap) settings.engineGroupMap = {};
@@ -548,16 +610,21 @@ async function assignEngineGroup(engineId, groupId) {
 function renderGroups() {
   const list = document.getElementById("groupList");
   if (!list) return;
-  list.innerHTML = "";
+  list.replaceChildren();
   const groups = settings.engineGroups || [];
   for (const group of groups) {
     const row = document.createElement("div");
     row.className = "group-row";
-    row.innerHTML = `
-      <span class="group-name">${escHtml(group.name)}</span>
-      <button class="delete-btn" title="Remove group" aria-label="Remove ${escHtml(group.name)}">×</button>
-    `;
-    row.querySelector(".delete-btn").addEventListener("click", () => deleteGroup(group.id));
+    const name = document.createElement("span");
+    name.className = "group-name";
+    name.textContent = group.name;
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "delete-btn";
+    deleteBtn.title = "Remove group";
+    deleteBtn.setAttribute("aria-label", `Remove ${group.name}`);
+    deleteBtn.textContent = "x";
+    row.append(name, deleteBtn);
+    deleteBtn.addEventListener("click", () => deleteGroup(group.id));
     list.appendChild(row);
   }
 }
@@ -589,7 +656,7 @@ async function deleteGroup(groupId) {
   renderEngines(document.getElementById("filterInput").value);
 }
 
-// ── Reset ──
+// â”€â”€ Reset â”€â”€
 
 async function resetSection(section) {
   if (section === "features") {
@@ -616,7 +683,7 @@ async function resetSection(section) {
 document.getElementById("resetFeatures").addEventListener("click", () => resetSection("features"));
 document.getElementById("resetEngines").addEventListener("click", () => resetSection("engines"));
 
-// ── Export / Import ──
+// â”€â”€ Export / Import â”€â”€
 
 function exportConfig() {
   const data = JSON.stringify(settings, null, 2);
@@ -644,8 +711,8 @@ document.getElementById("importFile").addEventListener("change", async (e) => {
     const raw = JSON.parse(text);
     const imported = sanitizeImport(raw);
     settings = { ...DEFAULTS, ...imported };
-    await chrome.storage.sync.set(settings);
-    chrome.runtime.sendMessage({ type: "settingsChanged" });
+    await api.storage.sync.set(settings);
+    notifySettingsChanged();
 
     document.getElementById("bgTabsEnabled").checked = settings.bgTabsEnabled;
     document.getElementById("searchEnabled").checked = settings.searchEnabled;
@@ -676,7 +743,7 @@ document.getElementById("importFile").addEventListener("change", async (e) => {
   e.target.value = "";
 });
 
-// ── Group UI listeners ──
+// â”€â”€ Group UI listeners â”€â”€
 
 document.getElementById("addGroupBtn")?.addEventListener("click", addGroup);
 document.getElementById("newGroupName")?.addEventListener("input", (e) => {
@@ -687,7 +754,7 @@ document.getElementById("newGroupName")?.addEventListener("keydown", (e) => {
 });
 
 async function renderTopEngines() {
-  const { engineStats = {} } = await chrome.storage.local.get({ engineStats: {} });
+  const { engineStats = {} } = await api.storage.local.get({ engineStats: {} });
   const all = getOrderedEngines();
   const sorted = Object.entries(engineStats)
     .map(([id, times]) => ({ id, count: times.length }))
@@ -697,15 +764,22 @@ async function renderTopEngines() {
   const el = document.getElementById("topEngines");
   if (sorted.length === 0) { el.style.display = "none"; return; }
   el.style.display = "flex";
-  el.innerHTML = sorted.map((s) => {
+  el.replaceChildren();
+  for (const s of sorted) {
     const engine = all.find((e) => e.id === s.id);
-    const name = engine ? escHtml(engine.name) : s.id;
-    return `<span class="stat-chip">${name}<span class="stat-count">${s.count}</span></span>`;
-  }).join("");
+    const chip = document.createElement("span");
+    chip.className = "stat-chip";
+    chip.append(document.createTextNode(engine ? engine.name : s.id));
+    const count = document.createElement("span");
+    count.className = "stat-count";
+    count.textContent = s.count;
+    chip.appendChild(count);
+    el.appendChild(chip);
+  }
 }
 
 load().then(() => {
-  chrome.runtime.sendMessage({ type: "resetBadge" }).catch(() => {});
+  api.runtime.sendMessage({ type: "resetBadge" }).catch(() => {});
   if (!settings.searchEnabled) {
     document.getElementById("enginesSection").style.opacity = "0.4";
     document.getElementById("enginesSection").style.pointerEvents = "none";
