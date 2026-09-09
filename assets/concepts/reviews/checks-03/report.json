@@ -1,0 +1,89 @@
+[
+  {
+    "command": "node",
+    "args": [
+      "--check",
+      "background.js"
+    ],
+    "status": 0,
+    "output": ""
+  },
+  {
+    "command": "node",
+    "args": [
+      "--check",
+      "content.js"
+    ],
+    "status": 0,
+    "output": ""
+  },
+  {
+    "command": "node",
+    "args": [
+      "--check",
+      "popup.js"
+    ],
+    "status": 0,
+    "output": ""
+  },
+  {
+    "command": "node",
+    "args": [
+      "--check",
+      "quickmenu.js"
+    ],
+    "status": 0,
+    "output": ""
+  },
+  {
+    "command": "node",
+    "args": [
+      "--check",
+      "post.js"
+    ],
+    "status": 0,
+    "output": ""
+  },
+  {
+    "command": "node",
+    "args": [
+      "--check",
+      "sidepanel.js"
+    ],
+    "status": 0,
+    "output": ""
+  },
+  {
+    "command": "node",
+    "args": [
+      "--test",
+      "tests/runtime.test.cjs"
+    ],
+    "status": 0,
+    "output": "✔ documented short bangs resolve enabled YouTube and GitHub engines (1.7136ms)\n✔ bangs cannot select a disabled engine (1.2547ms)\n✔ all query and page placeholders are encoded (0.7301ms)\n✔ quick menu obtains bundled engines through an internal message (0.7767ms)\n✔ middle-click capture stops immediately when disabled (3.064ms)\n✔ background tab messages reject non-web URLs (0.7775ms)\n✔ concurrent engine usage is not lost (0.8614ms)\nℹ tests 7\nℹ suites 0\nℹ pass 7\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 57.9203\n"
+  },
+  {
+    "command": "python",
+    "args": [
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test_build.py"
+    ],
+    "status": 0,
+    "output": "....\r\n----------------------------------------------------------------------\r\nRan 4 tests in 0.048s\r\n\r\nOK\r\n"
+  },
+  {
+    "command": "python",
+    "args": [
+      "-B",
+      "build_extension.py"
+    ],
+    "status": 0,
+    "output": "dist/BackgroundSearch-v2.7.1-chrome.zip\r\ndist/BackgroundSearch-v2.7.1-firefox.zip\r\n"
+  }
+]

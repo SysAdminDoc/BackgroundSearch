@@ -1,65 +1,96 @@
 # BackgroundSearch
 
-![Version](https://img.shields.io/badge/version-v2.7.0-blue) ![License](https://img.shields.io/badge/license-MIT-green) ![Platform](https://img.shields.io/badge/platform-Chrome%2FFirefox%20Extension-lightgrey)
+![Version](https://img.shields.io/badge/version-v2.7.1-blue) ![License](https://img.shields.io/badge/license-MIT-green) ![Platform](https://img.shields.io/badge/platform-Chrome%20%7C%20Firefox-lightgrey)
 
-Chrome and Firefox extension that forces new tabs to open in the background and adds custom search engines to the right-click context menu.
+## Look it up. Keep your place.
 
-## Features
+<img src="icon.png" width="224" align="right" alt="BackgroundSearch blue browser and magnifying-glass artwork">
 
-- **Force Background Tabs** — New tabs open behind your current tab instead of switching to them
-- **Shift Modifier Override** — Hold Shift while clicking to invert the current background/foreground default
-- **Context Menu Search** — Highlight text, right-click, and search with any enabled engine. Results open in a background tab
-- **Quick Menu** — Floating engine buttons appear near your text selection for one-click search (optional)
-- **29 Search Engine Presets** — Google, Bing, DuckDuckGo, YouTube, Reddit, GitHub, Kagi, MDN, Hacker News, arXiv, npm, and more
-- **Search All Engines** — One right-click item fans out across every enabled engine simultaneously, auto-grouped in Chrome when tab groups are available
-- **Engine Groups** — Organize engines into named groups (Dev, Shopping, Research) that appear as sub-menus in the right-click menu
-- **Reverse Image Search** — Right-click any image to reverse search via Google Lens, Yandex, TinEye, or Bing
-- **Clipboard Search** — Right-click any page to search your clipboard text
-- **Tab Placement Control** — Open search results next to your current tab or at the end of the tab bar
-- **Per-Site Rules** — Force foreground or background per-domain with exact, glob, or regex matching
-- **Custom Engine Editor** — Add engines with `%s`, `%url`, `%title`, `%host` URL templates; GET or POST method
-- **OpenSearch Import** — Import engines directly from `opensearch.xml` descriptor URLs
-- **Omnibox Search** — Type `bs query` in the address bar; supports bang syntax (`bs !yt cats`)
-- **Side Panel** — Persistent Chrome search interface with search history
-- **Engine Usage Stats** — Top 5 engines of the week shown in the popup
-- **Favicon Auto-Fetch** — Engine favicons loaded automatically with colored-initial fallback
-- **Badge Counter** — Background tab count shown on the toolbar icon
-- **Export / Import Config** — Backup and restore your full settings as a JSON file
-- **Dark / Light / System Theme** — Catppuccin Mocha and Latte with system preference detection
-- **Zero Bloat** — No tracking, no analytics, no remote code, fully open source
+BackgroundSearch opens search results behind the page you're reading. Select text and choose an engine from the right-click menu, or turn on the small Quick Menu beside your selection. You can also decide which sites should open new tabs in the foreground.
 
-## Install
+[Download for Chrome](https://github.com/SysAdminDoc/BackgroundSearch/releases/download/v2.7.1/BackgroundSearch-v2.7.1-chrome.zip) · [Firefox temporary package](https://github.com/SysAdminDoc/BackgroundSearch/releases/download/v2.7.1/BackgroundSearch-v2.7.1-firefox.zip) · [Setup guide](docs/guide.md)
 
-### Chrome / Chromium
+![Quick Menu beside selected text on a local demonstration page](assets/screenshots/quick-menu.png)
 
-1. Go to `chrome://extensions`
-2. Enable **Developer mode**
-3. Click **Load unpacked** and select this folder
+*The page is a local demonstration fixture. The floating menu is the installed extension, not a mockup.*
+
+## Search the way you work
+
+Start with Google or choose from 29 presets, including DuckDuckGo, GitHub, YouTube, MDN and Kagi. Only enabled engines appear in search menus.
+
+- **Select once, search elsewhere.** The optional Quick Menu puts your chosen engines beside selected text. Results use each engine's background, foreground or new-window setting.
+- Put several engines in a named right-click submenu. Search All opens results for every enabled engine and groups the result tabs in Chrome.
+- **Keep useful exceptions.** Set a hostname rule for a site that should always open a foreground tab. Exact names, wildcards and regular expressions are supported.
+- Add your own GET or POST engine, import a compatible OpenSearch descriptor, or back up the entire configuration to JSON.
+
+![BackgroundSearch settings with engine choices and tab controls](assets/screenshots/settings-dark.png)
+
+*Installed Chrome extension in a fresh test profile. Provider icons fall back to initials when network requests are unavailable.*
+
+## Install in a few minutes
+
+### Chrome and Chromium
+
+1. Download and extract the **Chrome ZIP** into a permanent folder.
+2. Open `chrome://extensions` and enable **Developer mode**. In Edge, use `edge://extensions`.
+3. Click **Load unpacked** and select the extracted folder that contains `manifest.json`.
+4. Pin BackgroundSearch, open its settings, and enable the engines you use.
+
+Keep that folder in place. To update, export your configuration, replace the files in the same folder with the new Chrome package, then click **Reload** on the extension card. Reload existing web pages so they receive the updated content scripts.
+
+The secondary CRX is intended for compatible self-hosted distribution systems. Use the ZIP for the setup above.
 
 ### Firefox
 
-Requires Firefox 142 or newer.
+The separate Firefox package requires **Firefox 142 or newer**. Extract it, open `about:debugging#/runtime/this-firefox`, choose **Load Temporary Add-on**, then select its `manifest.json`.
 
-1. Run `python build_extension.py --target firefox`
-2. Go to `about:debugging#/runtime/this-firefox`
-3. Click **Load Temporary Add-on...**
-4. Select `dist/BackgroundSearch-v2.7.0-firefox/manifest.json`
+**This is an unsigned temporary add-on. Firefox removes it at restart.** There is no permanent signed Firefox installer in this release. Chrome's side panel and automatic result-tab groups aren't included in the Firefox package. [Mozilla's temporary-installation guide](https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/) explains this limitation.
 
-## Build
+## Useful controls
 
-```bash
-python build_extension.py
+| Task | Where to find it |
+| --- | --- |
+| Search from selected text or a link | The page's right-click menu |
+| Search without right-clicking | Enable Quick Menu on Selection |
+| Open results next to the current tab or at the end | Tab behavior, appearance and site rules |
+| Change an engine's result destination | Click its BG, FG or WIN button |
+| Search an image URL | Right-click an image and choose a reverse-image provider |
+| Search from the address bar | Type `bs`, a space, then the query |
+| Look up a query while keeping a page visible | Chrome's side panel, with BackgroundSearch selected |
+| Back up settings or restore them | Export and Import in Search Engines |
+
+With YouTube enabled, `bs !yt browser tabs` chooses YouTube. `bs !gh browser tabs` chooses GitHub when enabled. Engine-name prefixes also work. Hold Shift on a normal web page to invert the default foreground/background behavior; an explicit site rule takes priority.
+
+The background-tab toggle is on initially. Context-menu search is on with Google selected. Quick Menu, Search All and middle-click capture start off.
+
+![BackgroundSearch side panel with local search history](assets/screenshots/sidepanel.png)
+
+*Installed side-panel content at a narrow panel width, with demonstration searches. The browser's surrounding side-panel frame isn't shown.*
+
+## Privacy and permissions
+
+There is no developer-operated search service. Your selected provider receives the query when you search. Providers have their own privacy policies.
+
+Settings use browser sync storage. If browser sync is enabled, its provider may sync those settings between your devices. The extension keeps engine-use timestamps locally and retains up to 50 side-panel searches in the current browser profile. **Clear** removes that local side-panel list.
+
+Engine icons request favicons from Google's favicon service, including the hostname of a custom engine. Don't add a private hostname if you don't want that hostname used in an icon request. Custom templates can also send the current page URL, title or hostname to your chosen provider.
+
+The extension requests tab access for tab placement and page templates, page access for selection and modifier handling, and clipboard-read access for the explicit **Search clipboard text** action. Clipboard access can be blocked by page or browser restrictions. It isn't read automatically. [Full privacy details](docs/privacy.md) and [feature limits](docs/guide.md#feature-limits) cover the rest.
+
+## Build and check locally
+
+The extension has no runtime package dependencies. Python 3.11 or newer builds the installable ZIPs; Node.js 22 or newer runs the runtime checks.
+
+```text
+python -B -m unittest discover -s tests -p test_build.py
+node --test tests/runtime.test.cjs
+python -B build_extension.py
 ```
 
-## Usage
+The builder validates both manifests, safely replaces its own `dist` directory and writes separate reloadable folders and ZIPs. It doesn't install or launch a browser. See the [verification notes](docs/verification.md) for real-browser checks and explicit limits.
 
-- Click the toolbar icon to open settings
-- Toggle **Force Background Tabs** and **Context Menu Search** independently
-- Enable **Quick Menu** to get floating engine buttons when you select text
-- Enable **Search All Engines** to fan out across all enabled engines at once
-- Use the **Tab Placement** control to choose where new tabs appear
-- Enable/disable individual search engines — only enabled engines appear in the right-click menu
-- Use **+ Add custom engine** or **+ Import OpenSearch** to add any search engine
-- Type `bs query` in the address bar, or `bs !yt cats` for bang-syntax engine selection
-- Right-click images for reverse image search, or any page to search clipboard text
-- Open the **Side Panel** in Chrome for a persistent search interface with history
+## Support and project materials
+
+[Report a problem](https://github.com/SysAdminDoc/BackgroundSearch/issues) with your browser version and the steps that reproduce it. Remove private URLs and search terms before sharing a configuration file.
+
+The [concept archive](assets/concepts/README.md) preserves the original artwork, source snapshot and screenshot review attempts. The existing blue search identity is retained. MIT licensed; see [LICENSE](LICENSE).

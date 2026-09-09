@@ -1,0 +1,157 @@
+{
+  "relativeLinks": [
+    {
+      "doc": "README.md",
+      "link": "icon.png"
+    },
+    {
+      "doc": "README.md",
+      "link": "docs/guide.md"
+    },
+    {
+      "doc": "README.md",
+      "link": "assets/screenshots/quick-menu.png"
+    },
+    {
+      "doc": "README.md",
+      "link": "assets/screenshots/settings-dark.png"
+    },
+    {
+      "doc": "README.md",
+      "link": "assets/screenshots/sidepanel.png"
+    },
+    {
+      "doc": "README.md",
+      "link": "docs/privacy.md"
+    },
+    {
+      "doc": "README.md",
+      "link": "docs/guide.md#feature-limits"
+    },
+    {
+      "doc": "README.md",
+      "link": "docs/verification.md"
+    },
+    {
+      "doc": "README.md",
+      "link": "assets/concepts/README.md"
+    },
+    {
+      "doc": "README.md",
+      "link": "LICENSE"
+    },
+    {
+      "doc": "docs/guide.md",
+      "link": "../README.md#install-in-a-few-minutes"
+    },
+    {
+      "doc": "docs/guide.md",
+      "link": "verification.md"
+    },
+    {
+      "doc": "docs/verification.md",
+      "link": "../assets/concepts/README.md"
+    },
+    {
+      "doc": "docs/verification.md",
+      "link": "guide.md"
+    }
+  ],
+  "images": [
+    {
+      "src": "https://camo.githubusercontent.com/c10ef1e3168cc123ea81bfccd135dd1b08f434f9acdd06de2963f603ed1216a1/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f76657273696f6e2d76322e372e312d626c7565",
+      "loaded": true
+    },
+    {
+      "src": "https://camo.githubusercontent.com/f8df3091bbe1149f398a5369b2c39e896766f9f6efba3477c63e9b4aa940ef14/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6c6963656e73652d4d49542d677265656e",
+      "loaded": true
+    },
+    {
+      "src": "https://camo.githubusercontent.com/0d153a1e2b5c6f67b73c0855fd10fd8c31aeb1c55b0bf9a2ec50df87cedb3e4c/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f706c6174666f726d2d4368726f6d6525323025374325323046697265666f782d6c6967687467726579",
+      "loaded": true
+    },
+    {
+      "src": "icon.png",
+      "loaded": true
+    },
+    {
+      "src": "assets/screenshots/quick-menu.png",
+      "loaded": true
+    },
+    {
+      "src": "assets/screenshots/settings-dark.png",
+      "loaded": true
+    },
+    {
+      "src": "assets/screenshots/sidepanel.png",
+      "loaded": true
+    }
+  ],
+  "captures": [
+    "readme-1.png",
+    "readme-2.png",
+    "readme-3.png",
+    "readme-4.png",
+    "readme-5.png",
+    "readme-6.png",
+    "readme-7.png",
+    "brand-review.png"
+  ],
+  "errors": [],
+  "alpha": [
+    {
+      "file": "/icon.png",
+      "width": 1024,
+      "height": 1024,
+      "zeroAlphaPixels": 0
+    },
+    {
+      "file": "/icons/16.png",
+      "width": 16,
+      "height": 16,
+      "zeroAlphaPixels": 183
+    },
+    {
+      "file": "/icons/32.png",
+      "width": 32,
+      "height": 32,
+      "zeroAlphaPixels": 753
+    },
+    {
+      "file": "/icons/48.png",
+      "width": 48,
+      "height": 48,
+      "zeroAlphaPixels": 1666
+    },
+    {
+      "file": "/icons/128.png",
+      "width": 128,
+      "height": 128,
+      "zeroAlphaPixels": 12222
+    },
+    {
+      "file": "/icons/16.png",
+      "width": 16,
+      "height": 16,
+      "zeroAlphaPixels": 183
+    },
+    {
+      "file": "/icons/32.png",
+      "width": 32,
+      "height": 32,
+      "zeroAlphaPixels": 753
+    },
+    {
+      "file": "/icons/48.png",
+      "width": 48,
+      "height": 48,
+      "zeroAlphaPixels": 1666
+    },
+    {
+      "file": "/icons/128.png",
+      "width": 128,
+      "height": 128,
+      "zeroAlphaPixels": 12222
+    }
+  ]
+}

@@ -8,6 +8,11 @@ web-ext-artifacts/
 # Markdown files local-only (except README)
 *.md
 !README.md
+!docs/**/*.md
+!assets/concepts/**/*.md
+__pycache__/
+node_modules/
+test-results/
 
 # AI config
 CODEX_CHANGELOG.md

@@ -1,0 +1,16 @@
+{
+  "name": "backgroundsearch",
+  "version": "2.7.1",
+  "private": true,
+  "description": "Local verification tools for BackgroundSearch",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test tests/runtime.test.cjs",
+    "test:browser": "node tests/installed-browser.cjs",
+    "test:firefox": "node tests/firefox-browser.mjs",
+    "build": "python -B build_extension.py"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

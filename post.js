@@ -1,6 +1,8 @@
 const params = new URLSearchParams(location.hash.slice(1));
 const action = params.get("action");
-if (action) {
+let allowed = false;
+try { allowed = ['http:', 'https:'].includes(new URL(action).protocol); } catch {}
+if (allowed) {
   const form = document.createElement("form");
   form.method = "POST";
   form.action = action;
@@ -14,4 +16,6 @@ if (action) {
   }
   document.body.appendChild(form);
   form.submit();
+} else {
+  document.body.textContent = 'Search could not open. The form action must be an HTTP or HTTPS URL.';
 }

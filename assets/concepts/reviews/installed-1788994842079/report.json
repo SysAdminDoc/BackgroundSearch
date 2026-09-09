@@ -1,0 +1,40 @@
+{
+  "version": "2.7.1",
+  "browser": "151.0.7922.34",
+  "isolatedHeadless": true,
+  "checks": [
+    "Installed package loads all 29 engines without horizontal overflow",
+    "Engine choices, themes and site rules save through their real controls",
+    "Real Quick Menu click opens a provider URL and preserves the reading tab"
+  ],
+  "pageErrors": [],
+  "network": [],
+  "blockedConnections": [
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "accounts.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "accounts.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "android.clients.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "accounts.google.com:443",
+    "www.google.com:443"
+  ],
+  "destinations": [
+    "https://www.google.com/search?q=CSS%20grid%20layout"
+  ],
+  "failure": "AssertionError [ERR_ASSERTION]: FG result lost focus\n    at <repository>/tests/installed-browser.cjs:121:10"
+}

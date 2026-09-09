@@ -1,4 +1,4 @@
-// BackgroundSearch v2.7.0 â€” Popup Settings
+// BackgroundSearch v2.7.1: Popup Settings
 
 const api = globalThis.browser || globalThis.chrome;
 
@@ -144,6 +144,7 @@ function renderEngines(filter = "") {
       groupSelect.className = "group-select";
       groupSelect.dataset.engine = engine.id;
       groupSelect.title = "Assign group";
+      groupSelect.setAttribute('aria-label', `Group for ${engine.name}`);
       const emptyOption = document.createElement("option");
       emptyOption.value = "";
       emptyOption.textContent = "-";
@@ -162,6 +163,7 @@ function renderEngines(filter = "") {
     const badge = document.createElement("button");
     badge.className = badgeClass;
     badge.title = "Cycle: BG / FG / Window";
+    badge.setAttribute('aria-label', `Open ${engine.name} results: ${targetLabel}. Click to change.`);
     badge.dataset.engine = engine.id;
     badge.textContent = targetLabel;
     row.appendChild(badge);
@@ -180,6 +182,7 @@ function renderEngines(filter = "") {
     toggleSwitch.className = "toggle-switch";
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
+    checkbox.setAttribute('aria-label', `Enable ${engine.name}`);
     checkbox.dataset.engine = engine.id;
     checkbox.checked = settings.enabledEngines.includes(engine.id);
     const track = document.createElement("div");
@@ -231,7 +234,7 @@ async function toggleEngine(id, on) {
   } else if (!on) {
     settings.enabledEngines = settings.enabledEngines.filter((e) => e !== id);
   }
-  await save();
+  if (!(await save())) return;
 }
 
 const SYNC_QUOTA = 102400;
@@ -241,29 +244,33 @@ async function save() {
   try {
     await api.storage.sync.set(settings);
   } catch (err) {
-    if (err?.message?.includes("QUOTA")) {
-      await api.storage.local.set(settings);
-      showToast("Storage full â€” saved locally only", true);
-    }
-    return;
+    console.error('Settings were not saved', err);
+    await load();
+    renderGroups();
+    renderSiteRules();
+    showToast('Not saved. Export your settings, then reduce the number of custom engines or rules.', true);
+    return false;
   }
-  const used = await api.storage.sync.getBytesInUse(null);
-  if (used > SYNC_QUOTA * SYNC_WARN_THRESHOLD) {
-    showToast(`Storage ${Math.round(used / SYNC_QUOTA * 100)}% full`, true);
+  if (api.storage.sync.getBytesInUse) {
+    const used = await api.storage.sync.getBytesInUse(null);
+    if (used > SYNC_QUOTA * SYNC_WARN_THRESHOLD) {
+      showToast(`Storage ${Math.round(used / SYNC_QUOTA * 100)}% full`, true);
+    }
   }
   notifySettingsChanged();
+  return true;
 }
 
 document.getElementById("bgTabsEnabled").addEventListener("change", async (e) => {
   settings.bgTabsEnabled = e.target.checked;
-  await save();
+  if (!(await save())) return;
 });
 
 document.getElementById("searchEnabled").addEventListener("change", async (e) => {
   settings.searchEnabled = e.target.checked;
   document.getElementById("enginesSection").style.opacity = e.target.checked ? "1" : "0.4";
   document.getElementById("enginesSection").style.pointerEvents = e.target.checked ? "auto" : "none";
-  await save();
+  if (!(await save())) return;
 });
 
 document.getElementById("filterInput").addEventListener("input", (e) => {
@@ -274,30 +281,30 @@ document.getElementById("enableAll").addEventListener("click", async () => {
   const allIds = [...ENGINES, ...(settings.customEngines || [])].map((e) => e.id);
   settings.enabledEngines = allIds;
   renderEngines(document.getElementById("filterInput").value);
-  await save();
+  if (!(await save())) return;
 });
 
 document.getElementById("disableAll").addEventListener("click", async () => {
   settings.enabledEngines = [];
   renderEngines(document.getElementById("filterInput").value);
-  await save();
+  if (!(await save())) return;
 });
 
 // â”€â”€ Search All & Tab Placement â”€â”€
 
 document.getElementById("searchAll").addEventListener("change", async (e) => {
   settings.searchAll = e.target.checked;
-  await save();
+  if (!(await save())) return;
 });
 
 document.getElementById("middleClickCapture").addEventListener("change", async (e) => {
   settings.middleClickCapture = e.target.checked;
-  await save();
+  if (!(await save())) return;
 });
 
 document.getElementById("quickMenu").addEventListener("change", async (e) => {
   settings.quickMenu = e.target.checked;
-  await save();
+  if (!(await save())) return;
 });
 
 document.querySelectorAll("#tabPlacementCtrl .seg-btn").forEach((btn) => {
@@ -305,7 +312,7 @@ document.querySelectorAll("#tabPlacementCtrl .seg-btn").forEach((btn) => {
     document.querySelectorAll("#tabPlacementCtrl .seg-btn").forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
     settings.tabPlacement = btn.dataset.val;
-    await save();
+    if (!(await save())) return;
   });
 });
 
@@ -317,7 +324,7 @@ document.querySelectorAll("#themeCtrl .seg-btn").forEach((btn) => {
     btn.classList.add("active");
     settings.themeMode = btn.dataset.val;
     applyTheme(settings.themeMode);
-    await save();
+    if (!(await save())) return;
   });
 });
 
@@ -327,7 +334,7 @@ const SAFE_PROTOCOLS = ["http:", "https:"];
 const VALID_SETTINGS_KEYS = new Set(Object.keys(DEFAULTS));
 
 function isValidEngineUrl(url) {
-  if (!url || !url.includes("%s")) return false;
+  if (typeof url !== 'string' || !url.includes("%s")) return false;
   try {
     const test = new URL(url.replace("%s", "test"));
     return SAFE_PROTOCOLS.includes(test.protocol);
@@ -335,16 +342,39 @@ function isValidEngineUrl(url) {
 }
 
 function sanitizeImport(imported) {
+  if (!imported || Array.isArray(imported) || typeof imported !== 'object') throw new Error('Expected a settings object.');
   const clean = {};
   for (const key of Object.keys(imported)) {
     if (!VALID_SETTINGS_KEYS.has(key)) continue;
+    const value = imported[key];
+    const template = DEFAULTS[key];
+    if (Array.isArray(template)) {
+      if (!Array.isArray(value)) throw new Error(`Invalid ${key}.`);
+    } else if (typeof value !== typeof template || value === null) {
+      throw new Error(`Invalid ${key}.`);
+    }
     clean[key] = imported[key];
   }
-  if (Array.isArray(clean.customEngines)) {
-    clean.customEngines = clean.customEngines.filter(
-      (e) => e && typeof e.name === "string" && isValidEngineUrl(e.url)
-    );
+  for (const key of ['enabledEngines', 'fgEngines', 'windowEngines', 'engineOrder']) {
+    if (clean[key]?.some(id => typeof id !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(id))) throw new Error(`Invalid ${key}.`);
   }
+  const ids = new Set();
+  for (const engine of clean.customEngines || []) {
+    if (!engine || typeof engine.id !== 'string' || !/^custom_[a-zA-Z0-9_-]+$/.test(engine.id) || ids.has(engine.id)
+      || typeof engine.name !== 'string' || !engine.name.trim() || !isValidEngineUrl(engine.url)
+      || (engine.method && !['GET', 'POST'].includes(engine.method))
+      || (engine.postParams !== undefined && typeof engine.postParams !== 'string')) throw new Error('Invalid custom engine.');
+    ids.add(engine.id);
+  }
+  for (const rule of clean.siteRules || []) {
+    if (!rule || typeof rule.pattern !== 'string' || rule.pattern.length > 256
+      || !['glob', 'exact', 'regex'].includes(rule.type) || !['fg', 'bg', 'default'].includes(rule.action)) throw new Error('Invalid site rule.');
+    if (rule.type === 'regex') new RegExp(rule.pattern);
+  }
+  if ((clean.engineGroups || []).some(group => !group || typeof group.id !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(group.id) || typeof group.name !== 'string')) throw new Error('Invalid group.');
+  if (clean.engineGroupMap && (Array.isArray(clean.engineGroupMap) || Object.values(clean.engineGroupMap).some(id => typeof id !== 'string'))) throw new Error('Invalid group assignments.');
+  if (clean.tabPlacement && !['next', 'end'].includes(clean.tabPlacement)) throw new Error('Invalid placement.');
+  if (clean.themeMode && !['dark', 'light', 'system'].includes(clean.themeMode)) throw new Error('Invalid theme.');
   return clean;
 }
 
@@ -353,6 +383,7 @@ function showToast(msg, isError) {
   if (!toast) {
     toast = document.createElement("div");
     toast.id = "bs-toast";
+    toast.setAttribute('role', 'status');
     toast.style.cssText = "position:fixed;bottom:12px;left:50%;transform:translateX(-50%);padding:6px 14px;border-radius:6px;font-size:11px;z-index:999;transition:opacity 0.3s;pointer-events:none;";
     document.body.appendChild(toast);
   }
@@ -386,7 +417,7 @@ async function addCustomEngine() {
   if (!name) { nameInput.style.borderColor = "var(--red)"; valid = false; }
   if (!isValidEngineUrl(url)) { urlInput.style.borderColor = "var(--red)"; valid = false; }
   if (!valid) {
-    if (url && !isValidEngineUrl(url)) showToast("URL must be https:// with %s placeholder", true);
+    if (url && !isValidEngineUrl(url)) showToast("Use an HTTP or HTTPS URL with a %s placeholder.", true);
     return;
   }
 
@@ -408,7 +439,7 @@ async function addCustomEngine() {
     settings.enabledEngines.push(engine.id);
   }
 
-  await save();
+  if (!(await save())) return;
   nameInput.value = "";
   urlInput.value = "";
   document.getElementById("newEngineMethod").value = "GET";
@@ -419,7 +450,7 @@ async function addCustomEngine() {
 async function deleteCustomEngine(id) {
   settings.customEngines = (settings.customEngines || []).filter((e) => e.id !== id);
   settings.enabledEngines = settings.enabledEngines.filter((e) => e !== id);
-  await save();
+  if (!(await save())) return;
   renderEngines(document.getElementById("filterInput").value);
 }
 
@@ -442,16 +473,20 @@ document.getElementById("importOpenSearchBtn").addEventListener("click", async (
   urlInput.style.borderColor = "";
 
   try {
+    if (!['http:', 'https:'].includes(new URL(url).protocol)) throw new Error('Use an HTTP or HTTPS descriptor URL.');
     const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`Descriptor returned HTTP ${resp.status}.`);
     const text = await resp.text();
     const doc = new DOMParser().parseFromString(text, "application/xml");
     const name = doc.querySelector("ShortName")?.textContent?.trim();
     const urlNode = doc.querySelector('Url[type="text/html"]');
     const template = urlNode?.getAttribute("template");
+    if (doc.querySelector('parsererror') || (urlNode?.getAttribute('method') || 'GET').toUpperCase() !== 'GET'
+      || urlNode?.querySelector('Param')) { showToast('Use Add custom engine for POST or parameter-based descriptors.', true); return; }
 
     if (!name || !template) { showToast("Invalid OpenSearch descriptor", true); return; }
 
-    const engineUrl = template.replace("{searchTerms}", "%s");
+    const engineUrl = template.replaceAll("{searchTerms}", "%s");
     if (!isValidEngineUrl(engineUrl)) { showToast("Engine URL not valid", true); return; }
 
     const engine = {
@@ -467,13 +502,14 @@ document.getElementById("importOpenSearchBtn").addEventListener("click", async (
       settings.enabledEngines.push(engine.id);
     }
 
-    await save();
+    if (!(await save())) return;
     urlInput.value = "";
     document.getElementById("openSearchForm").classList.remove("open");
     renderEngines(document.getElementById("filterInput").value);
     showToast(`Imported "${name}"`, false);
-  } catch {
-    showToast("Failed to fetch OpenSearch XML", true);
+  } catch (error) {
+    console.error('OpenSearch import failed', error);
+    showToast("Could not import. The URL must allow cross-origin access.", true);
   }
 });
 
@@ -508,7 +544,7 @@ async function cycleEngineTarget(id) {
     // BG -> FG
     settings.fgEngines = [...fgEngines, id];
   }
-  await save();
+  if (!(await save())) return;
   renderEngines(document.getElementById("filterInput").value);
 }
 
@@ -522,7 +558,7 @@ async function reorderEngine(fromId, toId) {
   ordered.splice(fromIdx, 1);
   ordered.splice(toIdx, 0, fromId);
   settings.engineOrder = ordered;
-  await save();
+  if (!(await save())) return;
   renderEngines(document.getElementById("filterInput").value);
 }
 
@@ -567,6 +603,10 @@ async function addSiteRule() {
   const actionSelect = document.getElementById("newRuleAction");
   const pattern = patternInput.value.trim();
   if (!pattern) { patternInput.style.borderColor = "var(--red)"; return; }
+  try {
+    if (pattern.length > 256) throw new Error('Rule is too long.');
+    if (typeSelect.value === 'regex') new RegExp(pattern);
+  } catch { showToast('Enter a valid pattern of up to 256 characters.', true); return; }
   patternInput.style.borderColor = "";
 
   if (!settings.siteRules) settings.siteRules = [];
@@ -575,7 +615,7 @@ async function addSiteRule() {
     type: typeSelect.value,
     action: actionSelect.value,
   });
-  await save();
+  if (!(await save())) return;
   patternInput.value = "";
   renderSiteRules();
 }
@@ -583,7 +623,7 @@ async function addSiteRule() {
 async function deleteSiteRule(index) {
   if (!settings.siteRules) return;
   settings.siteRules.splice(index, 1);
-  await save();
+  if (!(await save())) return;
   renderSiteRules();
 }
 
@@ -604,7 +644,7 @@ async function assignEngineGroup(engineId, groupId) {
   } else {
     delete settings.engineGroupMap[engineId];
   }
-  await save();
+  if (!(await save())) return;
 }
 
 function renderGroups() {
@@ -637,7 +677,7 @@ async function addGroup() {
 
   if (!settings.engineGroups) settings.engineGroups = [];
   settings.engineGroups.push({ id: `grp_${Date.now()}`, name });
-  await save();
+  if (!(await save())) return;
   input.value = "";
   renderGroups();
   renderEngines(document.getElementById("filterInput").value);
@@ -651,7 +691,7 @@ async function deleteGroup(groupId) {
     if (map[key] === groupId) delete map[key];
   }
   settings.engineGroupMap = map;
-  await save();
+  if (!(await save())) return;
   renderGroups();
   renderEngines(document.getElementById("filterInput").value);
 }
@@ -663,6 +703,8 @@ async function resetSection(section) {
     settings.bgTabsEnabled = DEFAULTS.bgTabsEnabled;
     settings.searchEnabled = DEFAULTS.searchEnabled;
     settings.searchAll = DEFAULTS.searchAll;
+    settings.middleClickCapture = DEFAULTS.middleClickCapture;
+    settings.quickMenu = DEFAULTS.quickMenu;
     settings.tabPlacement = DEFAULTS.tabPlacement;
     settings.omniboxEngineId = DEFAULTS.omniboxEngineId;
     settings.themeMode = DEFAULTS.themeMode;
@@ -676,7 +718,7 @@ async function resetSection(section) {
     settings.engineGroupMap = {};
     settings.engineOrder = [];
   }
-  await save();
+  if (!(await save())) return;
   location.reload();
 }
 
@@ -711,13 +753,13 @@ document.getElementById("importFile").addEventListener("change", async (e) => {
     const raw = JSON.parse(text);
     const imported = sanitizeImport(raw);
     settings = { ...DEFAULTS, ...imported };
-    await api.storage.sync.set(settings);
-    notifySettingsChanged();
+    if (!(await save())) return;
 
     document.getElementById("bgTabsEnabled").checked = settings.bgTabsEnabled;
     document.getElementById("searchEnabled").checked = settings.searchEnabled;
     document.getElementById("searchAll").checked = settings.searchAll || false;
     document.getElementById("middleClickCapture").checked = settings.middleClickCapture || false;
+    document.getElementById("quickMenu").checked = settings.quickMenu || false;
 
     const tp = settings.tabPlacement || "next";
     document.querySelectorAll("#tabPlacementCtrl .seg-btn").forEach((btn) => {
@@ -757,7 +799,8 @@ async function renderTopEngines() {
   const { engineStats = {} } = await api.storage.local.get({ engineStats: {} });
   const all = getOrderedEngines();
   const sorted = Object.entries(engineStats)
-    .map(([id, times]) => ({ id, count: times.length }))
+    .map(([id, times]) => ({ id, count: Array.isArray(times) ? times.filter(time => time > Date.now() - 7 * 86400000).length : 0 }))
+    .filter(item => item.count > 0)
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
 

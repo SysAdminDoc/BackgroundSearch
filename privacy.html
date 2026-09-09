@@ -1,41 +1,32 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BackgroundSearch — Privacy Policy</title>
+<title>BackgroundSearch privacy</title>
 <style>
-  body { max-width: 640px; margin: 40px auto; padding: 0 20px; font-family: system-ui, sans-serif; line-height: 1.6; color: #cdd6f4; background: #1e1e2e; }
-  h1 { font-size: 1.4em; }
-  h2 { font-size: 1.1em; margin-top: 1.5em; }
-  a { color: #89b4fa; }
+:root{color-scheme:dark light}body{max-width:780px;margin:48px auto;padding:0 24px;font:16px/1.7 system-ui;background:#171b28;color:#e5ecff}h1{font-size:32px;line-height:1.2}h2{font-size:22px;margin-top:30px}a{color:#99c6ff}li{margin:8px 0}code{background:#272d40;padding:2px 5px;border-radius:4px}@media(prefers-color-scheme:light){body{background:#f6f8fc;color:#26334d}a{color:#1d57b7}code{background:#e7ecf5}}
 </style>
-</head>
-<body>
-<h1>BackgroundSearch — Privacy Policy</h1>
-<p><strong>Last updated:</strong> 2026-06-20</p>
-
-<h2>Data Collection</h2>
-<p>BackgroundSearch does <strong>not</strong> collect, transmit, or store any personal data, browsing history, search queries, or analytics.</p>
-
-<h2>Permissions</h2>
+<h1>BackgroundSearch privacy</h1>
+<p>Applies to BackgroundSearch v2.7.1. Updated September 9, 2026.</p>
+<p>BackgroundSearch is a browser extension. It doesn't operate a search server, load remote executable code or send usage reports to its developer. That doesn't make browsing or searching anonymous.</p>
+<h2>What is stored</h2>
 <ul>
-  <li><strong>tabs / tabGroups</strong> — Used to open search results in background tabs and group them. No tab URLs are logged or transmitted.</li>
-  <li><strong>contextMenus</strong> — Used to create right-click search engine menu items.</li>
-  <li><strong>storage</strong> — Used to save your settings (enabled engines, site rules, theme). Data stays in Chrome's built-in sync storage and is never sent to any external server.</li>
-  <li><strong>scripting</strong> — Used to track Shift key state and middle-click capture on pages.</li>
+<li><strong>Browser sync storage:</strong> feature settings, enabled and custom engines, site rules, groups, theme and result-tab preferences. If you enable browser sync, your browser's provider can sync those settings to your other devices. Custom engine URLs and site-rule patterns are part of those settings.</li>
+<li><strong>Local extension storage:</strong> engine-use timestamps and up to 50 recent side-panel searches, including the query, engine name and time. These aren't copied into the settings export or sync storage. Usage timestamps are pruned during new recorded searches; the popup displays only the past seven days.</li>
+<li>The toolbar counter and short-lived tab state are kept in memory and can reset when the extension's background process restarts.</li>
+<li>An exported configuration is a JSON file wherever you choose to save it. Treat private engine URLs and hostname rules in that file as private information.</li>
 </ul>
-
-<h2>Third-Party Services</h2>
-<p>When you search, your query is sent directly to the search engine you selected (Google, Bing, etc.) via a standard browser navigation. BackgroundSearch does not proxy, intercept, or modify your search traffic.</p>
-
-<h2>Local Storage</h2>
-<p>Your configuration (enabled engines, custom engines, groups, site rules, theme) is stored in <code>chrome.storage.sync</code> and optionally <code>chrome.storage.local</code>. This data syncs across your Chrome instances via your Google account if Chrome sync is enabled. BackgroundSearch has no access to your Google account.</p>
-
-<h2>Open Source</h2>
-<p>BackgroundSearch is open source under the MIT License. You can inspect the full source code at <a href="https://github.com/SysAdminDoc/BackgroundSearch">github.com/SysAdminDoc/BackgroundSearch</a>.</p>
-
-<h2>Contact</h2>
-<p>For questions about this privacy policy, open an issue on the <a href="https://github.com/SysAdminDoc/BackgroundSearch/issues">GitHub repository</a>.</p>
-</body>
+<h2>What leaves your browser</h2>
+<p>A search opens the selected provider directly. That provider receives the query, ordinary browser connection information and any cookies its site normally receives. POST engines submit their configured form fields. Reverse-image search sends the image URL to the provider; BackgroundSearch doesn't upload the image bytes itself.</p>
+<p>Engine lists and Quick Menu request icons from <code>https://www.google.com/s2/favicons</code>. Each request includes the engine's hostname, including a custom engine's hostname. Google receives normal connection information with that request. Settings use colored initials when icons can't load; Quick Menu retains the engine names. Avoid private hostnames in custom engines if this icon request is unsuitable for your use.</p>
+<p>Importing an OpenSearch descriptor fetches the URL you enter. The target server receives that request. The extension doesn't bypass a site's cross-origin restrictions.</p>
+<p>A custom template may include <code>%url</code>, <code>%title</code> or <code>%host</code>. Those placeholders send information about the current page to the engine you configured when the search path supports them. Check the template before using it on a private page.</p>
+<h2>Clipboard and page access</h2>
+<p>Clipboard text is requested only after you choose <strong>Search clipboard text</strong>. That text becomes a query sent to the selected engine. It isn't polled or read in the background. Your browser or the active page can block access.</p>
+<p>Content scripts observe text selection, Shift state and optional middle-click links on pages where you allow them. Tab access lets the extension read the current tab's URL and title and manage tab placement. It doesn't have the browser-history API permission and doesn't export your browsing history.</p>
+<h2>Permissions</h2>
+<p><strong>tabs</strong> and <strong>activeTab</strong> support tab management and page-aware search. <strong>contextMenus</strong> adds right-click actions. <strong>storage</strong> saves your settings and the local data described above. <strong>clipboardRead</strong> and <strong>scripting</strong> support the explicit clipboard action. Chrome also uses <strong>tabGroups</strong> and <strong>sidePanel</strong>. Firefox omits those Chrome-only permissions.</p>
+<h2>Clear or remove data</h2>
+<p>Click <strong>Clear</strong> in the side panel to remove its recent-search list. Reset buttons restore their named settings sections. To remove all local extension data, uninstall the extension. Delete exported JSON files separately and manage browser sync through your browser's settings. Your browser's ordinary browsing history is separate from the extension's local list.</p>
+<p><a href="https://github.com/SysAdminDoc/BackgroundSearch">Source and support</a> · <a href="INSTALL.html">Installation guide</a></p>
 </html>

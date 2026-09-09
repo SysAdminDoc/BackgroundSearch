@@ -1,0 +1,26 @@
+{
+  "version": "2.7.0",
+  "package": "<repository>/dist/BackgroundSearch-v2.7.0-chrome",
+  "isolatedHeadless": true,
+  "errors": [],
+  "checks": {
+    "engineCount": 29,
+    "quickMenuHostAfterSelection": 0,
+    "middleCaptureOff": true,
+    "middleClickPreventedWhenOff": true,
+    "bangYouTube": null,
+    "bangGitHub": null,
+    "bangFullName": {
+      "engine": {
+        "id": "youtube",
+        "name": "YouTube",
+        "url": "https://www.youtube.com/results?search_query=%s",
+        "color": "#ff0000"
+      },
+      "query": "browser extension"
+    },
+    "panelOverflow": true,
+    "complete": true
+  },
+  "extensionId": "neodhmiagkcdnobkandjhedhfnodfabl"
+}

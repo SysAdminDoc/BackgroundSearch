@@ -11,8 +11,8 @@
   let shadow = null;
 
   async function loadConfig() {
-    const resp = await fetch(api.runtime.getURL("engines.json"));
-    engines = await resp.json();
+    engines = await api.runtime.sendMessage({ type: 'getEngines' });
+    if (!Array.isArray(engines)) throw new Error('Could not load search engines.');
     const data = await api.storage.sync.get({
       quickMenu: false,
       enabledEngines: ["google"],
@@ -43,12 +43,12 @@
     const style = document.createElement("style");
     style.textContent = `
       :host { position: fixed; z-index: 2147483647; pointer-events: none; }
-      .qm { display: none; position: absolute; background: #1e1e2e; border: 1px solid #313244;
-             border-radius: 8px; padding: 4px; gap: 2px; flex-wrap: wrap; max-width: 200px;
+      .qm { display: none; position: absolute; width: max-content; background: #1e1e2e; border: 1px solid #45475a;
+             border-radius: 8px; padding: 6px; gap: 4px; flex-wrap: wrap; max-width: 280px;
              box-shadow: 0 4px 16px rgba(0,0,0,0.4); pointer-events: auto; }
       .qm.show { display: flex; }
-      .qm-btn { width: 28px; height: 28px; border: none; border-radius: 4px; cursor: pointer;
-                 font-size: 10px; font-weight: 700; color: #11111b; display: flex;
+      .qm-btn { min-width: 28px; min-height: 32px; border: 1px solid #45475a; border-radius: 4px; cursor: pointer;
+                 font: 12px system-ui,sans-serif; color: #e5edff; background: #273146; display: flex; padding: 4px 8px; gap: 6px;
                  align-items: center; justify-content: center; transition: opacity 0.15s; }
       .qm-btn:hover { opacity: 0.75; }
       .qm-btn img { width: 16px; height: 16px; border-radius: 2px; }
@@ -70,33 +70,41 @@
       const btn = document.createElement("button");
       btn.className = "qm-btn";
       btn.title = engine.name;
-      btn.style.background = engine.color || "#45475a";
+      btn.setAttribute('aria-label', `Search ${engine.name}`);
 
       try {
         const domain = new URL(engine.url.replace("%s", "test")).hostname;
         const img = document.createElement("img");
         img.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=16`;
         img.addEventListener("error", () => {
-          btn.replaceChildren(document.createTextNode(engine.name.charAt(0)));
+          img.remove();
         }, { once: true });
         btn.appendChild(img);
       } catch {
-        btn.textContent = engine.name.charAt(0);
+        // The engine name remains available without an icon.
       }
+      btn.appendChild(document.createTextNode(engine.name));
 
-      btn.addEventListener("click", (e) => {
+      btn.addEventListener("click", async (e) => {
         e.stopPropagation();
-        const url = engine.url.replace("%s", encodeURIComponent(selectedText));
-        api.runtime.sendMessage({ type: "quickMenuSearch", url, engineId: engine.id }).catch(() => {});
-        hideMenu();
+        try {
+          const result = await api.runtime.sendMessage({ type: "quickMenuSearch", text: selectedText, engineId: engine.id });
+          if (!result?.ok) throw new Error(result?.error || 'Search could not open.');
+          hideMenu();
+        } catch (error) {
+          btn.title = error.message;
+          btn.textContent = '!';
+          console.error('BackgroundSearch could not open search', error);
+        }
       });
       menu.appendChild(btn);
     }
 
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const mx = Math.min(x, vw - 220);
-    const my = Math.min(y + 10, vh - 80);
+    menu.classList.add('show');
+    const mx = Math.max(4, Math.min(x, vw - menu.offsetWidth - 8));
+    const my = Math.max(4, Math.min(y + 10, vh - menu.offsetHeight - 8));
     menuEl.style.left = mx + "px";
     menuEl.style.top = my + "px";
     menu.classList.add("show");
@@ -131,8 +139,10 @@
 
   api.storage.onChanged.addListener((changes, areaName) => {
     if (areaName && areaName !== "sync") return;
-    if (changes.quickMenu) enabled = changes.quickMenu.newValue;
-    if (changes.enabledEngines) enabledIds = changes.enabledEngines.newValue;
+    if (['quickMenu', 'enabledEngines', 'customEngines', 'engineOrder'].some(key => key in changes)) {
+      hideMenu();
+      loadConfig().catch(error => console.error('BackgroundSearch settings could not load', error));
+    }
   });
 
   loadConfig().catch(() => {});

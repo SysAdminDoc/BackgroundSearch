@@ -1,0 +1,89 @@
+[
+  {
+    "command": "node",
+    "args": [
+      "--check",
+      "background.js"
+    ],
+    "status": 0,
+    "output": ""
+  },
+  {
+    "command": "node",
+    "args": [
+      "--check",
+      "content.js"
+    ],
+    "status": 0,
+    "output": ""
+  },
+  {
+    "command": "node",
+    "args": [
+      "--check",
+      "popup.js"
+    ],
+    "status": 0,
+    "output": ""
+  },
+  {
+    "command": "node",
+    "args": [
+      "--check",
+      "quickmenu.js"
+    ],
+    "status": 0,
+    "output": ""
+  },
+  {
+    "command": "node",
+    "args": [
+      "--check",
+      "post.js"
+    ],
+    "status": 0,
+    "output": ""
+  },
+  {
+    "command": "node",
+    "args": [
+      "--check",
+      "sidepanel.js"
+    ],
+    "status": 0,
+    "output": ""
+  },
+  {
+    "command": "node",
+    "args": [
+      "--test",
+      "tests/runtime.test.cjs"
+    ],
+    "status": 0,
+    "output": "✔ documented short bangs resolve enabled YouTube and GitHub engines (2.4706ms)\n✔ bangs cannot select a disabled engine (0.6443ms)\n✔ all query and page placeholders are encoded (0.7305ms)\n✔ quick menu obtains bundled engines through an internal message (0.7871ms)\n✔ middle-click capture stops immediately when disabled (2.9896ms)\n✔ background tab messages reject non-web URLs (0.617ms)\n✔ concurrent engine usage is not lost (0.7683ms)\n✔ POST navigation expands query and page fields without executing non-web URLs (0.8982ms)\n✔ config import rejects malformed data: null (1.4322ms)\n✔ config import rejects malformed data: [] (0.7924ms)\n✔ config import rejects malformed data: {\"enabledEngines\":\"google\"} (0.6704ms)\n✔ config import rejects malformed data: {\"quickMenu\":\"yes\"} (0.5104ms)\n✔ config import rejects malformed data: {\"siteRules\":[null]} (0.5021ms)\n✔ config import rejects malformed data: {\"customEngines\":[{\"id\":\"custom_test\",\"name\":\"Unsafe\",\"url\":\"javascript:%s\"}]} (0.6518ms)\n✔ config import rejects malformed data: {\"siteRules\":[{\"pattern\":\"[\",\"type\":\"regex\",\"action\":\"fg\"}]} (0.5826ms)\n✔ config import rejects malformed data: {\"engineGroupMap\":[]} (0.5094ms)\n✔ valid older configuration remains importable (0.9942ms)\n✔ foreground results are activated after creation, without entering the background-force path (0.5965ms)\n✔ focus history stays separate for each browser window (0.6281ms)\nℹ tests 19\nℹ suites 0\nℹ pass 19\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 67.2418\n"
+  },
+  {
+    "command": "python",
+    "args": [
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test_build.py"
+    ],
+    "status": 0,
+    "output": "....\r\n----------------------------------------------------------------------\r\nRan 4 tests in 0.045s\r\n\r\nOK\r\n"
+  },
+  {
+    "command": "python",
+    "args": [
+      "-B",
+      "build_extension.py"
+    ],
+    "status": 0,
+    "output": "dist/BackgroundSearch-v2.7.1-chrome.zip\r\ndist/BackgroundSearch-v2.7.1-firefox.zip\r\n"
+  }
+]

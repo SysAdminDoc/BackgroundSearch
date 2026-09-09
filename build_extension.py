@@ -15,6 +15,8 @@ ROOT = Path(__file__).resolve().parent
 DIST = ROOT / "dist"
 
 COMMON_FILES = [
+    "LICENSE",
+    "INSTALL.html",
     "background.js",
     "content.js",
     "engines.json",
@@ -125,16 +127,20 @@ def zip_stage(stage: Path, version: str, target: str) -> Path:
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(stage.rglob("*")):
             if path.is_file():
-                archive.write(path, path.relative_to(stage).as_posix())
+                info = zipfile.ZipInfo(path.relative_to(stage).as_posix(), date_time=(2020, 1, 1, 0, 0, 0))
+                info.compress_type = zipfile.ZIP_DEFLATED
+                info.external_attr = 0o100644 << 16
+                archive.writestr(info, path.read_bytes())
 
     with zipfile.ZipFile(zip_path) as archive:
-        for name in archive.namelist():
+        names = archive.namelist()
+        for name in names:
             if "\\" in name:
                 raise SystemExit(f"{target}: ZIP entry contains backslash: {name}")
-            if name == "manifest.json":
-                break
-        else:
+        if "manifest.json" not in names:
             raise SystemExit(f"{target}: ZIP missing manifest.json")
+        if archive.testzip() is not None:
+            raise SystemExit(f"{target}: corrupt ZIP entry")
 
     return zip_path
 
@@ -150,6 +156,9 @@ def build(targets: list[str], validate_only: bool) -> None:
         print(f"Validated BackgroundSearch v{version}: {', '.join(targets)}")
         return
 
+    redirected = DIST.exists() and bool(getattr(DIST.lstat(), "st_file_attributes", 0) & 0x400)
+    if DIST.is_symlink() or redirected or DIST.resolve() != ROOT.resolve() / "dist":
+        raise SystemExit("Refusing to clean an unexpected or redirected build directory.")
     if DIST.exists():
         shutil.rmtree(DIST)
     DIST.mkdir()

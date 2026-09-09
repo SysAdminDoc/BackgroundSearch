@@ -1,0 +1,89 @@
+[
+  {
+    "command": "node",
+    "args": [
+      "--check",
+      "background.js"
+    ],
+    "status": 0,
+    "output": ""
+  },
+  {
+    "command": "node",
+    "args": [
+      "--check",
+      "content.js"
+    ],
+    "status": 0,
+    "output": ""
+  },
+  {
+    "command": "node",
+    "args": [
+      "--check",
+      "popup.js"
+    ],
+    "status": 0,
+    "output": ""
+  },
+  {
+    "command": "node",
+    "args": [
+      "--check",
+      "quickmenu.js"
+    ],
+    "status": 0,
+    "output": ""
+  },
+  {
+    "command": "node",
+    "args": [
+      "--check",
+      "post.js"
+    ],
+    "status": 0,
+    "output": ""
+  },
+  {
+    "command": "node",
+    "args": [
+      "--check",
+      "sidepanel.js"
+    ],
+    "status": 0,
+    "output": ""
+  },
+  {
+    "command": "node",
+    "args": [
+      "--test",
+      "tests/runtime.test.cjs"
+    ],
+    "status": 0,
+    "output": "✔ documented short bangs resolve enabled YouTube and GitHub engines (2.0271ms)\n✔ bangs cannot select a disabled engine (1.2554ms)\n✔ all query and page placeholders are encoded (0.7588ms)\n✔ quick menu obtains bundled engines through an internal message (0.8271ms)\n✔ middle-click capture stops immediately when disabled (3.7396ms)\n✔ background tab messages reject non-web URLs (0.8566ms)\n✔ concurrent engine usage is not lost (0.8076ms)\nℹ tests 7\nℹ suites 0\nℹ pass 7\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 61.5768\n"
+  },
+  {
+    "command": "python",
+    "args": [
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-p",
+      "test_build.py"
+    ],
+    "status": 0,
+    "output": "..\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.108s\r\n\r\nOK\r\n"
+  },
+  {
+    "command": "python",
+    "args": [
+      "-B",
+      "build_extension.py"
+    ],
+    "status": 1,
+    "output": "Traceback (most recent call last):\r\n  File \"<repository>/build_extension.py\", line 191, in <module>\r\n    sys.exit(main())\r\n             ^^^^^^\r\n  File \"<repository>/build_extension.py\", line 186, in main\r\n    build(targets, args.validate_only)\r\n  File \"<repository>/build_extension.py\", line 159, in build\r\n    if DIST.is_symlink() or DIST.is_junction() or DIST.resolve() != ROOT.resolve() / \"dist\":\r\n                            ^^^^^^^^^^^^^^^^\r\nAttributeError: 'WindowsPath' object has no attribute 'is_junction'\r\n"
+  }
+]

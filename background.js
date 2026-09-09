@@ -1,11 +1,19 @@
-// BackgroundSearch v2.7.0
+// BackgroundSearch v2.7.1
 // Forces new tabs to open in the background + custom context menu search.
 
 const api = globalThis.browser || globalThis.chrome;
 
 let ENGINES = [];
 
-async function trackEngineUse(engineId) {
+let statsQueue = Promise.resolve();
+
+function trackEngineUse(engineId) {
+  const next = statsQueue.then(() => recordEngineUse(engineId));
+  statsQueue = next.catch(error => console.error('Could not save engine usage', error));
+  return next;
+}
+
+async function recordEngineUse(engineId) {
   const { engineStats = {} } = await api.storage.local.get({ engineStats: {} });
   const now = Date.now();
   if (!engineStats[engineId]) engineStats[engineId] = [];
@@ -40,7 +48,7 @@ const DEFAULTS = {
 };
 
 let settings = { ...DEFAULTS };
-let lastActiveTabId = null;
+const lastActiveTabs = new Map();
 let recentlyCreatedTabs = new Set();
 let shiftHeld = false;
 let bgTabCount = 0;
@@ -113,9 +121,15 @@ function shouldForceBackground(url) {
 api.tabs.onActivated.addListener((activeInfo) => {
   if (recentlyCreatedTabs.has(activeInfo.tabId)) {
     recentlyCreatedTabs.delete(activeInfo.tabId);
+    const previous = lastActiveTabs.get(activeInfo.windowId);
     const switchBack = () => {
-      if (lastActiveTabId !== null) {
-        setTimeout(() => api.tabs.update(lastActiveTabId, { active: true }).catch(() => {}), 50);
+      if (previous !== undefined) {
+        setTimeout(async () => {
+          try {
+            const [active] = await api.tabs.query({ active: true, windowId: activeInfo.windowId });
+            if (active?.id === activeInfo.tabId) await api.tabs.update(previous, { active: true });
+          } catch (error) { console.error('Could not restore the previous tab', error); }
+        }, 50);
       }
     };
     api.tabs.get(activeInfo.tabId).then((tab) => {
@@ -124,7 +138,7 @@ api.tabs.onActivated.addListener((activeInfo) => {
       if (shouldForceBackground(null)) switchBack();
     });
   } else {
-    lastActiveTabId = activeInfo.tabId;
+    lastActiveTabs.set(activeInfo.windowId, activeInfo.tabId);
   }
 });
 
@@ -138,7 +152,9 @@ api.tabs.onCreated.addListener((tab) => {
 
 api.tabs.onRemoved.addListener((tabId) => {
   recentlyCreatedTabs.delete(tabId);
-  if (tabId === lastActiveTabId) lastActiveTabId = null;
+  for (const [windowId, activeId] of lastActiveTabs) {
+    if (tabId === activeId) lastActiveTabs.delete(windowId);
+  }
 });
 
 // â”€â”€ Context Menu Search â”€â”€
@@ -302,6 +318,41 @@ function expandTemplate(template, query, tab) {
   return url;
 }
 
+function isWebUrl(url) {
+  try { return ['http:', 'https:'].includes(new URL(url).protocol); } catch { return false; }
+}
+
+function engineNavigationUrl(engine, text, tab) {
+  const query = encodeURIComponent(text);
+  const url = expandTemplate(engine.url, query, tab);
+  if (!isWebUrl(url)) throw new Error('Search engines must use an HTTP or HTTPS URL.');
+  if (engine.method !== 'POST') return url;
+  const body = expandTemplate(engine.postParams || 'q=%s', query, tab);
+  return api.runtime.getURL('post.html') + '#action=' + encodeURIComponent(url) + '&' + body;
+}
+
+async function searchWithEngine(engine, text, tab) {
+  const url = engineNavigationUrl(engine, text, tab);
+  if ((settings.windowEngines || []).includes(engine.id)) {
+    await api.windows.create({ url, focused: true });
+  } else {
+    const active = (settings.fgEngines || []).includes(engine.id);
+    const opts = { url, active };
+    if (tab) { opts.openerTabId = tab.id; opts.windowId = tab.windowId; }
+    if (!active && settings.tabPlacement !== 'end' && tab) opts.index = tab.index + 1;
+    await createResultTab(opts);
+    if (!active) { bgTabCount++; updateBadge(); }
+  }
+  await trackEngineUse(engine.id);
+}
+
+async function createResultTab(options) {
+  // Create inactive first so the general new-tab rule cannot override an explicit foreground choice.
+  const created = await api.tabs.create({ ...options, active: false });
+  if (options.active) await api.tabs.update(created.id, { active: true });
+  return created;
+}
+
 api.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === "bs_clipboard" && tab?.id) {
     try {
@@ -309,11 +360,7 @@ api.contextMenus.onClicked.addListener(async (info, tab) => {
       if (!clipText) return;
       const engine = getOmniboxEngine();
       if (!engine) return;
-      const url = engine.url.replace("%s", encodeURIComponent(clipText));
-      const opts = { url, active: false, openerTabId: tab.id };
-      if (settings.tabPlacement !== "end") opts.index = tab.index + 1;
-      api.tabs.create(opts);
-      bgTabCount++; updateBadge();
+      await searchWithEngine(engine, clipText, tab);
     } catch {}
     return;
   }
@@ -340,28 +387,6 @@ api.contextMenus.onClicked.addListener(async (info, tab) => {
   if (!text) return;
 
   const query = encodeURIComponent(text);
-  const openTab = (engine) => {
-    const url = expandTemplate(engine.url, query, tab);
-    try { const u = new URL(url); if (!["http:", "https:"].includes(u.protocol)) return; } catch { return; }
-
-    let navUrl = url;
-    if (engine.method === "POST") {
-      const postBody = (engine.postParams || "q=%s").replace("%s", query);
-      const hash = `action=${encodeURIComponent(url)}&${postBody}`;
-      navUrl = api.runtime.getURL("post.html") + "#" + hash;
-    }
-
-    const isWindow = (settings.windowEngines || []).includes(engine.id);
-    if (isWindow) {
-      api.windows.create({ url: navUrl, focused: true });
-      return;
-    }
-    const isFg = (settings.fgEngines || []).includes(engine.id);
-    const opts = { url: navUrl, active: isFg, openerTabId: tab?.id };
-    if (!isFg && settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
-    api.tabs.create(opts);
-    if (!isFg) { bgTabCount++; updateBadge(); }
-  };
 
   if (info.menuItemId === "search_all") {
     const enabled = getAllEngines().filter((e) => settings.enabledEngines.includes(e.id));
@@ -381,7 +406,7 @@ api.contextMenus.onClicked.addListener(async (info, tab) => {
         const isFg = (settings.fgEngines || []).includes(eng.id);
         const opts = { url: navUrl, active: isFg, openerTabId: tab?.id };
         if (!isFg && settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
-        const created = await api.tabs.create(opts);
+        const created = await createResultTab(opts);
         tabIds.push(created.id);
         if (!isFg) { bgTabCount++; updateBadge(); }
         trackEngineUse(eng.id);
@@ -391,7 +416,7 @@ api.contextMenus.onClicked.addListener(async (info, tab) => {
       if (tabIds.length > 1 && api.tabs.group && api.tabGroups?.update) {
         try {
           const groupId = await api.tabs.group({ tabIds });
-          const label = text.length > 20 ? text.slice(0, 20) + "â€¦" : text;
+          const label = text.length > 20 ? text.slice(0, 20) + "..." : text;
           await api.tabGroups.update(groupId, { title: `BS: ${label}`, color: "blue" });
         } catch {}
       }
@@ -404,33 +429,42 @@ api.contextMenus.onClicked.addListener(async (info, tab) => {
   const engine = getAllEngines().find((e) => e.id === engineId);
   if (!engine) return;
 
-  openTab(engine);
-  trackEngineUse(engine.id);
+  await searchWithEngine(engine, text, tab);
 });
 
 // â”€â”€ Settings Sync â”€â”€
 
-api.runtime.onMessage.addListener((msg, sender) => {
+api.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (!msg || (sender.id && sender.id !== api.runtime.id)) return;
+  if (msg.type === 'getEngines') {
+    if (ENGINES.length) { sendResponse(ENGINES); return; }
+    fetch(api.runtime.getURL('engines.json')).then(response => response.json())
+      .then(sendResponse).catch(() => sendResponse([]));
+    return true;
+  }
   if (msg.type === "settingsChanged") {
     loadSettings();
   } else if (msg.type === "modifierState") {
     shiftHeld = !!msg.shift;
   } else if (msg.type === "openTab") {
+    if (!isWebUrl(msg.url)) return;
     const bg = shouldForceBackground(msg.url);
     const tab = sender.tab;
     const opts = { url: msg.url, active: !bg };
     if (bg && settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
     if (tab) opts.openerTabId = tab.id;
-    api.tabs.create(opts);
+    createResultTab(opts).catch(error => console.error('Could not open link', error));
     if (bg) { bgTabCount++; updateBadge(); }
-  } else if (msg.type === "quickMenuSearch") {
-    const tab = sender.tab;
-    const opts = { url: msg.url, active: false };
-    if (settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
-    if (tab) opts.openerTabId = tab.id;
-    api.tabs.create(opts);
-    bgTabCount++; updateBadge();
-    trackEngineUse(msg.engineId);
+  } else if (msg.type === "quickMenuSearch" || msg.type === 'panelSearch') {
+    (async () => {
+      await loadSettings();
+      const engine = getAllEngines().find(e => e.id === msg.engineId && settings.enabledEngines.includes(e.id));
+      if (!engine || typeof msg.text !== 'string' || !msg.text.trim()) throw new Error('Choose an enabled search engine.');
+      const tab = sender.tab || (await api.tabs.query({ active: true, currentWindow: true }))[0];
+      await searchWithEngine(engine, msg.text.trim(), tab);
+      return { ok: true, engineName: engine.name };
+    })().then(sendResponse).catch(error => sendResponse({ ok: false, error: error.message }));
+    return true;
   } else if (msg.type === "resetBadge") {
     bgTabCount = 0;
     updateBadge();
@@ -524,7 +558,8 @@ function getOmniboxEngine() {
 function parseBang(text) {
   const match = text.match(/^!(\S+)\s+(.*)/);
   if (!match) return null;
-  const bang = match[1].toLowerCase();
+  const typed = match[1].toLowerCase();
+  const bang = ({ yt: 'youtube', gh: 'github', ddg: 'duckduckgo' })[typed] || typed;
   const query = match[2];
   const allEngines = getAllEngines();
   const enabled = allEngines.filter((e) => settings.enabledEngines.includes(e.id));
@@ -556,7 +591,7 @@ api.omnibox.onInputEntered.addListener(async (text, disposition) => {
   const engine = bang ? bang.engine : getOmniboxEngine();
   const query = bang ? bang.query : text.trim();
   if (!engine || !query) return;
-  const url = engine.url.replace("%s", encodeURIComponent(query));
+  const url = engineNavigationUrl(engine, query, (await api.tabs.query({ active: true, currentWindow: true }))[0]);
   trackEngineUse(engine.id);
 
   if (disposition === "currentTab") {
@@ -568,7 +603,7 @@ api.omnibox.onInputEntered.addListener(async (text, disposition) => {
   const [tab] = await api.tabs.query({ active: true, currentWindow: true });
   const opts = { url, active: fg };
   if (!fg && settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
-  api.tabs.create(opts);
+  await createResultTab(opts);
   if (!fg) { bgTabCount++; updateBadge(); }
 });
 
@@ -579,8 +614,8 @@ async function init(doMigrate) {
   ENGINES = await resp.json();
   if (doMigrate) await migrateSettings();
   try {
-    const [tab] = await api.tabs.query({ active: true, currentWindow: true });
-    if (tab) lastActiveTabId = tab.id;
+    const tabs = await api.tabs.query({ active: true });
+    for (const tab of tabs) lastActiveTabs.set(tab.windowId, tab.id);
   } catch {}
   await loadSettings();
 }

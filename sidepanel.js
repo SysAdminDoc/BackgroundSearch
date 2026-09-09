@@ -16,8 +16,10 @@ async function load() {
     engineOrder: [],
     tabPlacement: "next",
     fgEngines: [],
+    themeMode: 'system',
   });
   settings = data;
+  document.documentElement.dataset.theme = data.themeMode;
 
   const select = document.getElementById("engineSelect");
   const all = getAllEngines();
@@ -29,6 +31,8 @@ async function load() {
     opt.textContent = engine.name;
     select.appendChild(opt);
   }
+  document.getElementById('searchBtn').disabled = enabled.length === 0;
+  document.getElementById('searchStatus').textContent = enabled.length ? '' : 'Enable an engine in the toolbar settings to search.';
 
   renderHistory();
 }
@@ -49,19 +53,20 @@ function getAllEngines() {
 async function doSearch(query, engineId) {
   if (!query.trim()) return;
   const all = getAllEngines();
-  const engine = all.find((e) => e.id === engineId) || all[0];
+  const engine = all.find((e) => e.id === engineId && settings.enabledEngines.includes(e.id));
   if (!engine) return;
 
-  const url = engine.url.replace("%s", encodeURIComponent(query.trim()));
-  const [tab] = await api.tabs.query({ active: true, currentWindow: true });
-  const isFg = (settings.fgEngines || []).includes(engine.id);
-  const opts = { url, active: isFg };
-  if (!isFg && settings.tabPlacement !== "end" && tab) opts.index = tab.index + 1;
-  if (tab) opts.openerTabId = tab.id;
-  await api.tabs.create(opts);
-
-  await saveHistory(query.trim(), engine.name);
-  renderHistory();
+  const status = document.getElementById('searchStatus');
+  try {
+    const result = await api.runtime.sendMessage({ type: 'panelSearch', text: query.trim(), engineId });
+    if (!result?.ok) throw new Error(result?.error || 'Could not open search.');
+    await saveHistory(query.trim(), engine.name);
+    await renderHistory();
+    status.textContent = `Opened ${engine.name}.`;
+  } catch (error) {
+    status.textContent = error.message;
+    console.error('Search failed', error);
+  }
 }
 
 async function saveHistory(query, engineName) {
@@ -85,7 +90,7 @@ async function renderHistory() {
   }
 
   for (const item of searchHistory) {
-    const row = document.createElement("div");
+    const row = document.createElement("button");
     row.className = "history-item";
     const ago = timeAgo(item.time);
     const query = document.createElement("span");
@@ -136,4 +141,7 @@ document.getElementById("clearHistory").addEventListener("click", async () => {
   renderHistory();
 });
 
-load();
+api.storage.onChanged.addListener((changes, area) => {
+  if (area === 'sync') load().catch(error => { document.getElementById('searchStatus').textContent = error.message; });
+});
+load().catch(error => { document.getElementById('searchStatus').textContent = error.message; });

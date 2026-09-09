@@ -1,0 +1,136 @@
+{
+  "version": "2.7.1",
+  "browser": "151.0.7922.34",
+  "isolatedHeadless": true,
+  "checks": [
+    "Installed package loads all 29 engines without horizontal overflow",
+    "Engine choices, themes and site rules save through their real controls",
+    "Real Quick Menu click opens a provider URL and preserves the reading tab",
+    "An explicit foreground engine target overrides the background-tab default",
+    "Turning off middle-click capture restores native link handling on an already-open page",
+    "Documented short bang aliases resolve in the installed worker",
+    "Export creates a real JSON download; malformed import leaves saved settings intact",
+    "Narrow side panel opens searches, records history and clears it",
+    "Side panel follows live engine changes and never substitutes a disabled provider",
+    "No uncaught extension-page errors"
+  ],
+  "pageErrors": [],
+  "network": [
+    {
+      "url": "https://www.google.com/search?q=CSS%20grid%20layout",
+      "method": "GET",
+      "fixtureResponse": true
+    },
+    {
+      "url": "https://www.google.com/search?q=CSS%20grid%20layout",
+      "method": "GET",
+      "fixtureResponse": true
+    }
+  ],
+  "blockedConnections": [
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "accounts.google.com:443",
+    "www.google.com:443",
+    "accounts.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "android.clients.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "accounts.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "github.com:443",
+    "github.com:443",
+    "github.com:443",
+    "github.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "www.youtube.com:443",
+    "www.youtube.com:443",
+    "www.youtube.com:443",
+    "www.youtube.com:443",
+    "www.google.com:443",
+    "www.google.com:443",
+    "accounts.google.com:443",
+    "www.google.com:443"
+  ],
+  "destinations": [
+    "https://www.google.com/search?q=CSS%20grid%20layout"
+  ],
+  "foregroundCheck": {
+    "settings": {
+      "fgEngines": [
+        "google"
+      ]
+    },
+    "tabs": [
+      {
+        "id": 1901067191,
+        "url": "about:blank",
+        "active": false,
+        "windowId": 1901067190
+      },
+      {
+        "id": 1901067192,
+        "url": "chrome-extension://ljdhkaheihidbkpipfjhlepkdccbpjli/popup.html",
+        "active": false,
+        "windowId": 1901067190
+      },
+      {
+        "id": 1901067193,
+        "url": "http://127.0.0.1:63997/",
+        "active": false,
+        "windowId": 1901067190
+      },
+      {
+        "id": 1901067194,
+        "url": "https://www.google.com/search?q=CSS%20grid%20layout",
+        "active": false,
+        "windowId": 1901067190
+      },
+      {
+        "id": 1901067195,
+        "url": "https://www.google.com/search?q=CSS%20grid%20layout",
+        "active": true,
+        "windowId": 1901067190
+      }
+    ]
+  }
+}

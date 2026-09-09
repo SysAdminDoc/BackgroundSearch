@@ -1,0 +1,30 @@
+{
+  "_schemaVersion": 1,
+  "bgTabsEnabled": true,
+  "customEngines": [],
+  "enabledEngines": [
+    "google",
+    "github",
+    "youtube",
+    "duckduckgo"
+  ],
+  "engineGroupMap": {},
+  "engineGroups": [],
+  "engineOrder": [],
+  "fgEngines": [],
+  "middleClickCapture": false,
+  "omniboxEngineId": "",
+  "quickMenu": true,
+  "searchAll": false,
+  "searchEnabled": true,
+  "siteRules": [
+    {
+      "pattern": "*.example.org",
+      "type": "glob",
+      "action": "fg"
+    }
+  ],
+  "tabPlacement": "next",
+  "themeMode": "dark",
+  "windowEngines": []
+}

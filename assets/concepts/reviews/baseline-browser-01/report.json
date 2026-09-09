@@ -1,0 +1,9 @@
+{
+  "version": "2.7.0",
+  "package": "<repository>/dist/BackgroundSearch-v2.7.0-chrome",
+  "isolatedHeadless": true,
+  "errors": [],
+  "checks": {},
+  "extensionId": "neodhmiagkcdnobkandjhedhfnodfabl",
+  "fatal": "page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL\nCall log:\n\u001b[2m  - navigating to \"null/popup.html\", waiting until \"load\"\u001b[22m\n\n    at <review-work>/baseline-browser.cjs:42:15"
+}

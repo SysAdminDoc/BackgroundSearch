@@ -1,0 +1,18 @@
+{
+  "version": "2.7.1",
+  "browser": "151.0.7922.34",
+  "isolatedHeadless": true,
+  "checks": [
+    "Installed package loads all 29 engines without horizontal overflow",
+    "Engine choices, themes and site rules save through their real controls"
+  ],
+  "pageErrors": [],
+  "network": [
+    {
+      "url": "https://www.google.com/search?q=CSS%20grid%20layout&sei=0eOhaoT-Fv-mwPAP7rWboAc",
+      "method": "GET",
+      "fixtureResponse": true
+    }
+  ],
+  "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'chrome-extension://ljdhkaheihidbkpipfjhlepkdccbpjli/popup.html'\n- 'http://127.0.0.1:54203/'\n\n    at <repository>/tests/installed-browser.cjs:100:10"
+}

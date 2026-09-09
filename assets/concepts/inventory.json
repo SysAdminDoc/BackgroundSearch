@@ -1,0 +1,603 @@
+{
+  "originalCommit": "fc5fd69d236f4e0d9ddb70c4da57277af5a2dbd3",
+  "selectedCaptureRun": "installed-1788996187920",
+  "records": [
+    {
+      "file": "original-source-fc5fd69.zip",
+      "bytes": 595802,
+      "sha256": "c6a139b6e34175c30774f6c3fb85a5f8d73cad14b7627e9fd6d120635e65210d"
+    },
+    {
+      "file": "original-marketing/LOGO_PROMPTS.md",
+      "bytes": 8398,
+      "sha256": "2487b949c1f30ec2c19f530d7e4663dbe1fd6a975ed00edfd53759f6db8e2bff"
+    },
+    {
+      "file": "original-marketing/generate_icons.py",
+      "bytes": 1802,
+      "sha256": "a1bc8aed52a52fc3e9161de885d4d2ca3ccd6c75e464cf3a15fc14b8935a8989"
+    },
+    {
+      "file": "original-marketing/brand-artwork.png",
+      "bytes": 697846,
+      "sha256": "ca7efc25b00756fc8e6ac0e851f6a91a59078a434a95d398d07929fbc60993dd"
+    },
+    {
+      "file": "original-marketing/icons/16.png",
+      "bytes": 158,
+      "sha256": "5b2cadf5d1875aea034a0ccd69dd4255a9d0dc3c1b939032a1da2374e86a394e"
+    },
+    {
+      "file": "original-marketing/icons/32.png",
+      "bytes": 253,
+      "sha256": "c161ec30c763a10a1f9e77371d3b6868eca7159aaba41c5b44bd2da8e3647330"
+    },
+    {
+      "file": "original-marketing/icons/48.png",
+      "bytes": 328,
+      "sha256": "f5be199128ae84c38ff74c03bf4bbbf5d91dd263b68419fb645b32ebf27fd39e"
+    },
+    {
+      "file": "original-marketing/icons/128.png",
+      "bytes": 856,
+      "sha256": "954282a0f807b82d0652594a85b9ff80072840e89d73d66387da82a7512ccd1a"
+    },
+    {
+      "file": "original-packages/BackgroundSearch-v2.7.0-chrome.zip",
+      "bytes": 27175,
+      "sha256": "eeb02c4ee507c22713366349b619e755b5b13d78a899445aee2e1e473b784d92"
+    },
+    {
+      "file": "original-packages/BackgroundSearch-v2.7.0-firefox.zip",
+      "bytes": 24381,
+      "sha256": "32bf396bd241135cc10639db0731a095542958ff8288c1fb994090f5183590b0"
+    },
+    {
+      "file": "reviews/baseline-browser-01/report.json",
+      "bytes": 435,
+      "sha256": "419d707f814477d3acb973ff3c9950340c81169bfcefedab26b51d740b78661d"
+    },
+    {
+      "file": "reviews/baseline-browser-02/popup-dark.png",
+      "bytes": 51652,
+      "sha256": "207104ae6d918ccbd524381abf8d9a5e54acf5e2992d83293b6ccb69e33926b8"
+    },
+    {
+      "file": "reviews/baseline-browser-02/popup-light.png",
+      "bytes": 53175,
+      "sha256": "dbf0c20f1d20210e91cec0dbf835dcad98d84736f476b1448c607396add67b95"
+    },
+    {
+      "file": "reviews/baseline-browser-02/quick-menu-baseline.png",
+      "bytes": 23205,
+      "sha256": "6771ac603ac1f1da24e8e3479dd4c63b674af6640db132d4729c37d679ef1e27"
+    },
+    {
+      "file": "reviews/baseline-browser-02/report.json",
+      "bytes": 461,
+      "sha256": "cd6d51180ca795802f2c67f4e9668591d693422a8bb2dde1902cc2c18b686fe9"
+    },
+    {
+      "file": "reviews/baseline-browser-02/sidepanel-empty.png",
+      "bytes": 7840,
+      "sha256": "532eb86fb194500f21478263d57dd65a58f3a1f994f801b13165e65462ccfeb4"
+    },
+    {
+      "file": "reviews/baseline-browser-03/popup-dark.png",
+      "bytes": 51652,
+      "sha256": "207104ae6d918ccbd524381abf8d9a5e54acf5e2992d83293b6ccb69e33926b8"
+    },
+    {
+      "file": "reviews/baseline-browser-03/popup-light.png",
+      "bytes": 53175,
+      "sha256": "dbf0c20f1d20210e91cec0dbf835dcad98d84736f476b1448c607396add67b95"
+    },
+    {
+      "file": "reviews/baseline-browser-03/quick-menu-baseline.png",
+      "bytes": 23205,
+      "sha256": "6771ac603ac1f1da24e8e3479dd4c63b674af6640db132d4729c37d679ef1e27"
+    },
+    {
+      "file": "reviews/baseline-browser-03/report.json",
+      "bytes": 671,
+      "sha256": "356e0b35faa5b5d5dde8d6619f6596cdcf64d6611bce14d51a23ddf1174277ce"
+    },
+    {
+      "file": "reviews/baseline-browser-03/sidepanel-empty.png",
+      "bytes": 7742,
+      "sha256": "a8a61680f323dc18fbc309de90c9e2e2bd4c9d2ab378eba551d712df5af2fe8a"
+    },
+    {
+      "file": "reviews/checks-02/report.json",
+      "bytes": 2450,
+      "sha256": "973e168b7064a100738b920da05405d5b48d186f08c5825a858d14c2d723a4a4"
+    },
+    {
+      "file": "reviews/checks-03/report.json",
+      "bytes": 1994,
+      "sha256": "56edc9fa74dd98aadf0719ef2b1c46c3bd754308601b9bdaab3ea599b878c1b9"
+    },
+    {
+      "file": "reviews/checks-04/report.json",
+      "bytes": 2862,
+      "sha256": "604867c2f18907225f1104f2656618be5e399fd46d498e41bb38669044f7d415"
+    },
+    {
+      "file": "reviews/checks-05/report.json",
+      "bytes": 3036,
+      "sha256": "eef9560e743b295ff35d147dae2bf9b2472a1adbbaa5e7dcac368f747995a100"
+    },
+    {
+      "file": "reviews/checks-06/report.json",
+      "bytes": 3035,
+      "sha256": "22c5748e2a1a7f803f6f437a8aef4210b924064fd03d8f1331117d95176d140f"
+    },
+    {
+      "file": "reviews/checks-07/report.json",
+      "bytes": 3038,
+      "sha256": "f2465ed36e5c313f2561fb400883da3d186f3f784b4b0cba5ce2be6ea6b3b5dd"
+    },
+    {
+      "file": "reviews/document-review-1788995917391/brand-review.png",
+      "bytes": 88750,
+      "sha256": "83743d66042741a39bda54e72b2b576d96644a7e89480378fc20bcac1bc0a873"
+    },
+    {
+      "file": "reviews/document-review-1788995917391/readme-1.png",
+      "bytes": 114439,
+      "sha256": "7469f0c5fc7ff8e51a64d807c1f3a5c6baa8d2384ec499c89f651f68708586e0"
+    },
+    {
+      "file": "reviews/document-review-1788995917391/readme-2.png",
+      "bytes": 82391,
+      "sha256": "a10cddf00d9367da0f7705f7f1976a6da8e231c95f1a058ce510a3d544a1b943"
+    },
+    {
+      "file": "reviews/document-review-1788995917391/readme-3.png",
+      "bytes": 80990,
+      "sha256": "9399b6f3a2c420f3724f984ec57680478705b41006bf483a1a2a1c5060b10f65"
+    },
+    {
+      "file": "reviews/document-review-1788995917391/readme-4.png",
+      "bytes": 74368,
+      "sha256": "7f5205140756a0aca06b264abc0fc06ac582f2856ea04d8b048f72a300e80e42"
+    },
+    {
+      "file": "reviews/document-review-1788995917391/readme-5.png",
+      "bytes": 45323,
+      "sha256": "5f9bb9209db21f1e9689a9d460be0aafa1cf63daba9c0665b6e7168f9a38e1eb"
+    },
+    {
+      "file": "reviews/document-review-1788995917391/readme-6.png",
+      "bytes": 78039,
+      "sha256": "05977549f211cc72b1a4b732259019b2e192566a978a3880cf9da39acb922b84"
+    },
+    {
+      "file": "reviews/document-review-1788995917391/readme-7.png",
+      "bytes": 75526,
+      "sha256": "ca20b8a79e775daf05edb10f225e56ffff789dea4e826b89c4e99a69865afe4d"
+    },
+    {
+      "file": "reviews/document-review-1788995917391/report.json",
+      "bytes": 3469,
+      "sha256": "8b18163365a4578518d25246428fe78186082c309523b055c0021c865ae7f625"
+    },
+    {
+      "file": "reviews/document-review-1788996238496/brand-review.png",
+      "bytes": 95514,
+      "sha256": "0697e13ccf77827f407230ecb1f043ab2f92abdda642bb3ff7ece9430c9b02a2"
+    },
+    {
+      "file": "reviews/document-review-1788996238496/readme-1.png",
+      "bytes": 114439,
+      "sha256": "7469f0c5fc7ff8e51a64d807c1f3a5c6baa8d2384ec499c89f651f68708586e0"
+    },
+    {
+      "file": "reviews/document-review-1788996238496/readme-2.png",
+      "bytes": 82391,
+      "sha256": "a10cddf00d9367da0f7705f7f1976a6da8e231c95f1a058ce510a3d544a1b943"
+    },
+    {
+      "file": "reviews/document-review-1788996238496/readme-3.png",
+      "bytes": 80990,
+      "sha256": "9399b6f3a2c420f3724f984ec57680478705b41006bf483a1a2a1c5060b10f65"
+    },
+    {
+      "file": "reviews/document-review-1788996238496/readme-4.png",
+      "bytes": 74368,
+      "sha256": "7f5205140756a0aca06b264abc0fc06ac582f2856ea04d8b048f72a300e80e42"
+    },
+    {
+      "file": "reviews/document-review-1788996238496/readme-5.png",
+      "bytes": 45323,
+      "sha256": "5f9bb9209db21f1e9689a9d460be0aafa1cf63daba9c0665b6e7168f9a38e1eb"
+    },
+    {
+      "file": "reviews/document-review-1788996238496/readme-6.png",
+      "bytes": 78039,
+      "sha256": "05977549f211cc72b1a4b732259019b2e192566a978a3880cf9da39acb922b84"
+    },
+    {
+      "file": "reviews/document-review-1788996238496/readme-7.png",
+      "bytes": 75526,
+      "sha256": "ca20b8a79e775daf05edb10f225e56ffff789dea4e826b89c4e99a69865afe4d"
+    },
+    {
+      "file": "reviews/document-review-1788996238496/report.json",
+      "bytes": 3494,
+      "sha256": "7a10b031f241307913f9499fdcaf73d8a4e05acbf982f7e346ff552815189d9c"
+    },
+    {
+      "file": "reviews/firefox-1788995126435/report.json",
+      "bytes": 4125,
+      "sha256": "40c56e04bae3eb41a08ed7e3293d71fb8a733088db08410133f6774afb137e56"
+    },
+    {
+      "file": "reviews/firefox-1788995126435/settings-firefox.png",
+      "bytes": 58195,
+      "sha256": "be9b57f825de7880bf7aa02682623219b0983d89c176c96345e4a9231e249695"
+    },
+    {
+      "file": "reviews/firefox-1788995156589/report.json",
+      "bytes": 5655,
+      "sha256": "d3c35f5d6a65acc6b63c764952f1f961c7b254d0d350cfd41b9a40524cb46167"
+    },
+    {
+      "file": "reviews/firefox-1788995156589/settings-firefox.png",
+      "bytes": 58195,
+      "sha256": "be9b57f825de7880bf7aa02682623219b0983d89c176c96345e4a9231e249695"
+    },
+    {
+      "file": "reviews/runtime-icon-candidate/128.png",
+      "bytes": 4354,
+      "sha256": "548f5a50f44cceaba08604d4b7ca5c4a8f886b4b3aa1358efe5224371ebe0999"
+    },
+    {
+      "file": "reviews/runtime-icon-candidate/16.png",
+      "bytes": 351,
+      "sha256": "29da9f284d8303ed885ad101599e826888798d23f538ac604aad98ecded8fde0"
+    },
+    {
+      "file": "reviews/runtime-icon-candidate/32.png",
+      "bytes": 818,
+      "sha256": "90b9c49409d454465ecd809b6f5b33a8abfbf3468058fd8c1b9fbba87f7439ef"
+    },
+    {
+      "file": "reviews/runtime-icon-candidate/48.png",
+      "bytes": 1596,
+      "sha256": "b7dee7b424a4009f0adb728ac451eede61d3db63f2b84167f1d56b4a46f20813"
+    },
+    {
+      "file": "reviews/firefox-1788995459968/settings-firefox.png",
+      "bytes": 58195,
+      "sha256": "be9b57f825de7880bf7aa02682623219b0983d89c176c96345e4a9231e249695"
+    },
+    {
+      "file": "reviews/firefox-1788995501989/report.json",
+      "bytes": 4771,
+      "sha256": "c816738d71db51650e9b8167cbf5c92f49b7d839114667d5b3004182030b1a4e"
+    },
+    {
+      "file": "reviews/firefox-1788995501989/settings-firefox.png",
+      "bytes": 58195,
+      "sha256": "be9b57f825de7880bf7aa02682623219b0983d89c176c96345e4a9231e249695"
+    },
+    {
+      "file": "reviews/firefox-1788995721060/report.json",
+      "bytes": 5234,
+      "sha256": "42a54703c4082544b389b78832c40415cdbd2e4ba4817446e1ef7ed159619132"
+    },
+    {
+      "file": "reviews/firefox-1788995721060/settings-firefox.png",
+      "bytes": 52706,
+      "sha256": "c1e1c652b24538cc29b422ac783163992cdd03482ba4206a6bfa7154aabc0a1f"
+    },
+    {
+      "file": "reviews/firefox-1788996228195/report.json",
+      "bytes": 5104,
+      "sha256": "c2336ffb68a2beb113b393799ba697aafbd9d2937afe882cd5091af1a4f8b5fa"
+    },
+    {
+      "file": "reviews/firefox-1788996228195/settings-firefox.png",
+      "bytes": 58322,
+      "sha256": "b4a7dac347f1aade7a4a9f872a2a101d937ced7d3578252afbb7210e0bd36343"
+    },
+    {
+      "file": "reviews/installed-1788994509187/advanced-settings.png",
+      "bytes": 38342,
+      "sha256": "864bf9e75525b55579836737f82c6dfd249b6c1a063a92fab1fa19c4db14f2c6"
+    },
+    {
+      "file": "reviews/installed-1788994509187/quick-menu.png",
+      "bytes": 25305,
+      "sha256": "73d1994f1448de9d3d9bca30a3b507bc8713b628de4ccafd40d86c29fea0d0eb"
+    },
+    {
+      "file": "reviews/installed-1788994509187/report.json",
+      "bytes": 718,
+      "sha256": "1fecd4ef39d41573e8c0f712458cc841e9f15ea3856182513f2d5988c24d4f8a"
+    },
+    {
+      "file": "reviews/installed-1788994509187/settings-dark.png",
+      "bytes": 50581,
+      "sha256": "5838e1ec6fbeb1276b234d3330bc013da820b060854b71e318c1766762a06476"
+    },
+    {
+      "file": "reviews/installed-1788994509187/settings-light.png",
+      "bytes": 51666,
+      "sha256": "9378ca0bdb263be73b0c2d3e95c3dfda0906272024f942f4bfdb371a9f48773b"
+    },
+    {
+      "file": "reviews/installed-1788994577934/advanced-settings.png",
+      "bytes": 38386,
+      "sha256": "8f3b1775a31e23e90bd3975e819762931f573e23df99cd4f28e6adcb577054df"
+    },
+    {
+      "file": "reviews/installed-1788994577934/quick-menu.png",
+      "bytes": 25305,
+      "sha256": "73d1994f1448de9d3d9bca30a3b507bc8713b628de4ccafd40d86c29fea0d0eb"
+    },
+    {
+      "file": "reviews/installed-1788994577934/report.json",
+      "bytes": 480,
+      "sha256": "303f2ce1fc101e67bd321866ca250ca6ef6818af1368739625a76bced7d9a97f"
+    },
+    {
+      "file": "reviews/installed-1788994577934/settings-dark.png",
+      "bytes": 50589,
+      "sha256": "3c13076fefbab2e69a5fc804c7758c5684095dc4cc1227876f7f04c140b31db5"
+    },
+    {
+      "file": "reviews/installed-1788994577934/settings-light.png",
+      "bytes": 51646,
+      "sha256": "4be5d58fef013a60be239f4a6eef6b794a3adcf9e39c0f47143f672fab596c93"
+    },
+    {
+      "file": "reviews/installed-1788994615850/advanced-settings.png",
+      "bytes": 38354,
+      "sha256": "d1bbf8d721868d694616f935bf444f24b393f35470f7e995a6a5c2150a9d38a9"
+    },
+    {
+      "file": "reviews/installed-1788994615850/exported-test-settings.json",
+      "bytes": 554,
+      "sha256": "f2a8271f211b82a184d44a19a3c5aa5bab17e9dfc00c9591b165d9e67cc3eb1f"
+    },
+    {
+      "file": "reviews/installed-1788994615850/quick-menu.png",
+      "bytes": 25305,
+      "sha256": "73d1994f1448de9d3d9bca30a3b507bc8713b628de4ccafd40d86c29fea0d0eb"
+    },
+    {
+      "file": "reviews/installed-1788994615850/report.json",
+      "bytes": 1864,
+      "sha256": "f308161152f7a8b3cd4331e6f53a32c48587031088a144d4a6690a6495623889"
+    },
+    {
+      "file": "reviews/installed-1788994615850/settings-dark.png",
+      "bytes": 50585,
+      "sha256": "a71a810987a4b79f0b92a875ea28939f2c4bf166a4e7b9809a9312148899fa7f"
+    },
+    {
+      "file": "reviews/installed-1788994615850/settings-light.png",
+      "bytes": 51653,
+      "sha256": "6b0354b43d01327db20b7959d0826d5b5ef6084f1b805916915f1f35f39163b6"
+    },
+    {
+      "file": "reviews/installed-1788994711960/advanced-settings.png",
+      "bytes": 38382,
+      "sha256": "71af9ba56f15fc15f315d5b3acf89a7e80ee5462bdd4b46d1364726ed30533d2"
+    },
+    {
+      "file": "reviews/installed-1788994711960/exported-test-settings.json",
+      "bytes": 554,
+      "sha256": "f2a8271f211b82a184d44a19a3c5aa5bab17e9dfc00c9591b165d9e67cc3eb1f"
+    },
+    {
+      "file": "reviews/installed-1788994711960/quick-menu.png",
+      "bytes": 25305,
+      "sha256": "73d1994f1448de9d3d9bca30a3b507bc8713b628de4ccafd40d86c29fea0d0eb"
+    },
+    {
+      "file": "reviews/installed-1788994711960/report.json",
+      "bytes": 1965,
+      "sha256": "4ecdff0eac574b4473b721a852ae6803d20c122e8504bd5aa8c4b0424d22b9c0"
+    },
+    {
+      "file": "reviews/installed-1788994711960/settings-dark.png",
+      "bytes": 50608,
+      "sha256": "eddf3324eb19e790fe018f9c6114a1b350032a800aec5129f34042320a223110"
+    },
+    {
+      "file": "reviews/installed-1788994711960/settings-light.png",
+      "bytes": 51643,
+      "sha256": "dd969bf3c155e7c9c8331e7ce7ba5d5e59e85220555189b3007b640881bc6e9e"
+    },
+    {
+      "file": "reviews/installed-1788994711960/sidepanel-empty.png",
+      "bytes": 15841,
+      "sha256": "87e31d68555ce3d04a03a74bbd707991530b7f8553d921c901687bbe7afc3a8c"
+    },
+    {
+      "file": "reviews/installed-1788994711960/sidepanel.png",
+      "bytes": 19855,
+      "sha256": "56c28442d7f6e0b61726f0d865ccfc68e0817e5eeae9de4d54d2999d616742f1"
+    },
+    {
+      "file": "reviews/installed-1788994842079/advanced-settings.png",
+      "bytes": 34523,
+      "sha256": "16080a40c45adc359e93c4a20ccf7a0b620b190840b8f2a656e27430888ff6c0"
+    },
+    {
+      "file": "reviews/installed-1788994842079/quick-menu.png",
+      "bytes": 26236,
+      "sha256": "a18c46b44307b3bb86b6003a2fe2d47d12ed4e926abe2e99f497f635e888a872"
+    },
+    {
+      "file": "reviews/installed-1788994842079/report.json",
+      "bytes": 1207,
+      "sha256": "d776eebfb89d438af96d2eb8083114fd8117396ba0bb28bc26c5939ad449e9d3"
+    },
+    {
+      "file": "reviews/installed-1788994842079/settings-dark.png",
+      "bytes": 51142,
+      "sha256": "1ef85561dfda29f12e73678639291d3a0e1d55f0cad4fb65d42e0746acf25bdb"
+    },
+    {
+      "file": "reviews/installed-1788994842079/settings-light.png",
+      "bytes": 52702,
+      "sha256": "9e7da2f02757cab497bf369a6c9f776fbab7cf0fa5c8a7e1f1449248f963f68f"
+    },
+    {
+      "file": "reviews/installed-1788994982654/advanced-settings.png",
+      "bytes": 34523,
+      "sha256": "16080a40c45adc359e93c4a20ccf7a0b620b190840b8f2a656e27430888ff6c0"
+    },
+    {
+      "file": "reviews/installed-1788994982654/quick-menu.png",
+      "bytes": 26236,
+      "sha256": "a18c46b44307b3bb86b6003a2fe2d47d12ed4e926abe2e99f497f635e888a872"
+    },
+    {
+      "file": "reviews/installed-1788994982654/report.json",
+      "bytes": 1155,
+      "sha256": "19268e351d5b8fc55a35d46ef3b225add2666f85d0d91668d5f0ef14046ebe75"
+    },
+    {
+      "file": "reviews/installed-1788994982654/settings-dark.png",
+      "bytes": 51142,
+      "sha256": "1ef85561dfda29f12e73678639291d3a0e1d55f0cad4fb65d42e0746acf25bdb"
+    },
+    {
+      "file": "reviews/installed-1788994982654/settings-light.png",
+      "bytes": 52702,
+      "sha256": "9e7da2f02757cab497bf369a6c9f776fbab7cf0fa5c8a7e1f1449248f963f68f"
+    },
+    {
+      "file": "reviews/installed-1788995023084/advanced-settings.png",
+      "bytes": 34523,
+      "sha256": "16080a40c45adc359e93c4a20ccf7a0b620b190840b8f2a656e27430888ff6c0"
+    },
+    {
+      "file": "reviews/installed-1788995023084/exported-test-settings.json",
+      "bytes": 570,
+      "sha256": "4f9cadaaf2a301450ec74f7ddb79843a34e917963d5d380cdd746dbac1cfc072"
+    },
+    {
+      "file": "reviews/installed-1788995023084/quick-menu.png",
+      "bytes": 26236,
+      "sha256": "a18c46b44307b3bb86b6003a2fe2d47d12ed4e926abe2e99f497f635e888a872"
+    },
+    {
+      "file": "reviews/installed-1788995023084/report.json",
+      "bytes": 3798,
+      "sha256": "475d62e992c1b4d19b89d870d84efc2bb2535a1f929502546b4cae9f769b6fc7"
+    },
+    {
+      "file": "reviews/installed-1788995023084/settings-dark.png",
+      "bytes": 51142,
+      "sha256": "1ef85561dfda29f12e73678639291d3a0e1d55f0cad4fb65d42e0746acf25bdb"
+    },
+    {
+      "file": "reviews/installed-1788995023084/settings-light.png",
+      "bytes": 52702,
+      "sha256": "9e7da2f02757cab497bf369a6c9f776fbab7cf0fa5c8a7e1f1449248f963f68f"
+    },
+    {
+      "file": "reviews/installed-1788995023084/sidepanel-empty.png",
+      "bytes": 15841,
+      "sha256": "87e31d68555ce3d04a03a74bbd707991530b7f8553d921c901687bbe7afc3a8c"
+    },
+    {
+      "file": "reviews/installed-1788995023084/sidepanel.png",
+      "bytes": 19855,
+      "sha256": "56c28442d7f6e0b61726f0d865ccfc68e0817e5eeae9de4d54d2999d616742f1"
+    },
+    {
+      "file": "reviews/installed-1788995682239/advanced-settings.png",
+      "bytes": 34523,
+      "sha256": "16080a40c45adc359e93c4a20ccf7a0b620b190840b8f2a656e27430888ff6c0"
+    },
+    {
+      "file": "reviews/installed-1788995682239/exported-test-settings.json",
+      "bytes": 570,
+      "sha256": "4f9cadaaf2a301450ec74f7ddb79843a34e917963d5d380cdd746dbac1cfc072"
+    },
+    {
+      "file": "reviews/installed-1788995682239/quick-menu.png",
+      "bytes": 26236,
+      "sha256": "a18c46b44307b3bb86b6003a2fe2d47d12ed4e926abe2e99f497f635e888a872"
+    },
+    {
+      "file": "reviews/installed-1788995682239/report.json",
+      "bytes": 3788,
+      "sha256": "97332bfcf4034e409856a3b5303fd9f3cf468be75b0f8a5efb8366f2e0598f07"
+    },
+    {
+      "file": "reviews/installed-1788995682239/settings-dark.png",
+      "bytes": 51376,
+      "sha256": "05a3c372396680b975089c750699974460672519627f1d3e485cfee8af5ceef4"
+    },
+    {
+      "file": "reviews/installed-1788995682239/settings-light.png",
+      "bytes": 52939,
+      "sha256": "d4473d82c410ab6e7e08b737ac4d1470ff5624200632f8e4752aaa38f08f0a33"
+    },
+    {
+      "file": "reviews/installed-1788995682239/sidepanel-empty.png",
+      "bytes": 15841,
+      "sha256": "87e31d68555ce3d04a03a74bbd707991530b7f8553d921c901687bbe7afc3a8c"
+    },
+    {
+      "file": "reviews/installed-1788995682239/sidepanel.png",
+      "bytes": 19855,
+      "sha256": "56c28442d7f6e0b61726f0d865ccfc68e0817e5eeae9de4d54d2999d616742f1"
+    },
+    {
+      "file": "reviews/installed-1788996187920/advanced-settings.png",
+      "bytes": 34523,
+      "sha256": "16080a40c45adc359e93c4a20ccf7a0b620b190840b8f2a656e27430888ff6c0"
+    },
+    {
+      "file": "reviews/installed-1788996187920/exported-test-settings.json",
+      "bytes": 570,
+      "sha256": "4f9cadaaf2a301450ec74f7ddb79843a34e917963d5d380cdd746dbac1cfc072"
+    },
+    {
+      "file": "reviews/installed-1788996187920/quick-menu.png",
+      "bytes": 26236,
+      "sha256": "a18c46b44307b3bb86b6003a2fe2d47d12ed4e926abe2e99f497f635e888a872"
+    },
+    {
+      "file": "reviews/installed-1788996187920/report.json",
+      "bytes": 3824,
+      "sha256": "d2aad388e717b62e8d216d1b41d82564bca2bd547a3ce574268ecdc3c37e8431"
+    },
+    {
+      "file": "reviews/installed-1788996187920/settings-dark.png",
+      "bytes": 51376,
+      "sha256": "05a3c372396680b975089c750699974460672519627f1d3e485cfee8af5ceef4"
+    },
+    {
+      "file": "reviews/installed-1788996187920/settings-light.png",
+      "bytes": 52939,
+      "sha256": "d4473d82c410ab6e7e08b737ac4d1470ff5624200632f8e4752aaa38f08f0a33"
+    },
+    {
+      "file": "reviews/installed-1788996187920/sidepanel-empty.png",
+      "bytes": 15841,
+      "sha256": "87e31d68555ce3d04a03a74bbd707991530b7f8553d921c901687bbe7afc3a8c"
+    },
+    {
+      "file": "reviews/installed-1788996187920/sidepanel.png",
+      "bytes": 19855,
+      "sha256": "56c28442d7f6e0b61726f0d865ccfc68e0817e5eeae9de4d54d2999d616742f1"
+    },
+    {
+      "file": "brand-review.png",
+      "bytes": 95514,
+      "sha256": "0697e13ccf77827f407230ecb1f043ab2f92abdda642bb3ff7ece9430c9b02a2"
+    }
+  ],
+  "reviewImages": 84,
+  "archivedFiles": 119
+}

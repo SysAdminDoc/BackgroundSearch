@@ -1,0 +1,12 @@
+{
+  "version": "2.7.1",
+  "browser": "151.0.7922.34",
+  "isolatedHeadless": true,
+  "checks": [
+    "Installed package loads all 29 engines without horizontal overflow",
+    "Engine choices, themes and site rules save through their real controls"
+  ],
+  "pageErrors": [],
+  "network": [],
+  "failure": "Error: Quick Menu did not open a provider search\n    at waitFor (<repository>/tests/installed-browser.cjs:24:9)\n    at async <repository>/tests/installed-browser.cjs:101:3"
+}

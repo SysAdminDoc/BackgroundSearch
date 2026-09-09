@@ -1,0 +1,18 @@
+{
+  "version": "2.7.0",
+  "package": "<repository>/dist/BackgroundSearch-v2.7.0-chrome",
+  "isolatedHeadless": true,
+  "errors": [],
+  "checks": {
+    "engineCount": 29,
+    "quickMenuHostAfterSelection": 0,
+    "middleCaptureOff": true,
+    "middleClickPreventedWhenOff": true,
+    "bangYouTube": null,
+    "bangGitHub": null,
+    "bangFullName": null,
+    "panelOverflow": true,
+    "complete": true
+  },
+  "extensionId": "neodhmiagkcdnobkandjhedhfnodfabl"
+}

@@ -1,13 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BackgroundSearch side panel</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
     --crust: #11111b; --mantle: #181825; --base: #1e1e2e;
     --surface0: #313244; --surface1: #45475a; --surface2: #585b70;
-    --overlay0: #6c7086; --text: #cdd6f4; --subtext0: #a6adc8;
+    --overlay0: #a6adc8; --text: #cdd6f4; --subtext0: #a6adc8;
     --blue: #89b4fa; --green: #a6e3a1; --red: #f38ba8; --mauve: #cba6f7;
     --peach: #fab387; --teal: #94e2d5;
   }
@@ -17,16 +19,16 @@
     padding: 12px; min-height: 100vh;
   }
   h2 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--overlay0); margin-bottom: 8px; }
-  .search-row { display: flex; gap: 6px; margin-bottom: 12px; }
+  .search-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-bottom: 6px; }
   .search-row input {
-    flex: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--surface0);
+    grid-column: 1 / -1; width: 100%; min-width: 0; padding: 10px; border-radius: 6px; border: 1px solid var(--surface0);
     background: var(--mantle); color: var(--text); font-size: 13px; outline: none;
   }
   .search-row input:focus { border-color: var(--blue); }
-  .search-row input::placeholder { color: var(--surface2); }
+  .search-row input::placeholder { color: var(--subtext0); }
   .search-row select {
     padding: 6px 8px; border-radius: 6px; border: 1px solid var(--surface0);
-    background: var(--mantle); color: var(--subtext0); font-size: 11px; outline: none; max-width: 100px;
+    background: var(--mantle); color: var(--subtext0); font-size: 12px; outline: none; min-width: 0; width: 100%;
   }
   .search-row button {
     padding: 8px 14px; border: none; border-radius: 6px; background: var(--blue);
@@ -34,6 +36,7 @@
   }
   .search-row button:hover { opacity: 0.85; }
   .history-item {
+    width: 100%; border: 1px solid var(--surface0); text-align: left; font-family: inherit;
     display: flex; align-items: center; justify-content: space-between;
     padding: 6px 10px; border-radius: 6px; background: var(--mantle);
     margin-bottom: 4px; cursor: pointer; transition: background 0.15s;
@@ -41,28 +44,43 @@
   .history-item:hover { background: var(--surface0); }
   .history-query { font-size: 12px; color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .history-engine { font-size: 9px; color: var(--overlay0); margin-left: 8px; flex-shrink: 0; }
-  .history-time { font-size: 9px; color: var(--surface2); margin-left: 6px; flex-shrink: 0; }
+  .history-time { font-size: 10px; color: var(--subtext0); margin-left: 6px; flex-shrink: 0; }
   .clear-btn {
     font-size: 10px; color: var(--overlay0); background: none; border: none;
     cursor: pointer; padding: 2px 5px; border-radius: 3px; float: right;
   }
   .clear-btn:hover { color: var(--subtext0); background: var(--surface0); }
-  .empty { font-size: 11px; color: var(--surface2); text-align: center; padding: 20px 0; }
+  .empty { font-size: 12px; color: var(--subtext0); text-align: center; padding: 24px 10px; border: 1px solid var(--surface0); border-radius: 8px; }
+  h1 { font-size: 18px; margin: 4px 0 8px; }
+  .intro, .privacy-note { font-size: 12px; color: var(--subtext0); line-height: 1.6; margin-bottom: 20px; }
+  #searchStatus { min-height: 32px; font-size: 12px; color: var(--subtext0); padding: 8px 0; }
+  .privacy-note { margin-top: 20px; }
+  a { color: var(--blue); }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  button:disabled { opacity: .5; cursor: default; }
+  [data-theme="light"] { --base:#eff1f5; --mantle:#e6e9ef; --crust:#fff; --text:#4c4f69; --subtext0:#5c5f77; --overlay0:#5c5f77; --surface0:#bcc0cc; --blue:#1e66f5; }
+  @media (prefers-color-scheme: light) {
+    [data-theme="system"] { --base:#eff1f5; --mantle:#e6e9ef; --crust:#fff; --text:#4c4f69; --subtext0:#5c5f77; --overlay0:#5c5f77; --surface0:#bcc0cc; --blue:#1e66f5; }
+  }
 </style>
 </head>
 <body>
+  <h1>BackgroundSearch</h1>
+  <p class="intro">Look it up. Keep your place.</p>
   <h2>Quick Search</h2>
   <div class="search-row">
-    <input type="text" id="query" placeholder="Search..." autofocus>
-    <select id="engineSelect"></select>
-    <button id="searchBtn">Go</button>
+    <input type="text" id="query" aria-label="Search query" placeholder="What are you looking for?" autofocus>
+    <select id="engineSelect" aria-label="Search engine"></select>
+    <button id="searchBtn">Search</button>
   </div>
+  <p id="searchStatus" role="status"></p>
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
     <h2 style="margin-bottom:0">Recent Searches</h2>
     <button class="clear-btn" id="clearHistory">Clear</button>
   </div>
   <div id="historyList"></div>
+  <p class="privacy-note">Your last 50 side-panel searches stay in this browser profile. Clear them above at any time. <a href="privacy.html" target="_blank">Privacy details</a></p>
 
   <script src="sidepanel.js"></script>
 </body>

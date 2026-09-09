@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <link rel="icon" href="icons/32.png">
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BackgroundSearch settings</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -13,7 +15,7 @@
     --surface0: #313244;
     --surface1: #45475a;
     --surface2: #585b70;
-    --overlay0: #6c7086;
+    --overlay0: #a6adc8;
     --text: #cdd6f4;
     --subtext0: #a6adc8;
     --subtext1: #bac2de;
@@ -34,7 +36,7 @@
     --surface0: #ccd0da;
     --surface1: #bcc0cc;
     --surface2: #acb0be;
-    --overlay0: #9ca0b0;
+    --overlay0: #5c5f77;
     --text: #4c4f69;
     --subtext0: #6c6f85;
     --subtext1: #5c5f77;
@@ -56,7 +58,7 @@
       --surface0: #ccd0da;
       --surface1: #bcc0cc;
       --surface2: #acb0be;
-      --overlay0: #9ca0b0;
+      --overlay0: #5c5f77;
       --text: #4c4f69;
       --subtext0: #6c6f85;
       --subtext1: #5c5f77;
@@ -72,8 +74,9 @@
   }
 
   body {
-    width: 360px;
-    max-height: 520px;
+    width: 400px;
+    max-width: 100%;
+    max-height: 600px;
     overflow-y: auto;
     background: var(--base);
     color: var(--text);
@@ -197,7 +200,8 @@
     cursor: pointer;
   }
 
-  .toggle-switch input { display: none; }
+  .toggle-switch input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; z-index: 1; cursor: pointer; }
+  .toggle-switch input:focus-visible ~ .toggle-track { outline: 2px solid var(--blue); outline-offset: 3px; }
 
   .toggle-track {
     position: absolute;
@@ -216,7 +220,7 @@
     width: 16px;
     height: 16px;
     background: var(--text);
-    border-radius: 50%;
+    border-radius: 6px;
     transition: transform 0.2s;
     pointer-events: none;
   }
@@ -453,7 +457,7 @@
   .reset-btn:hover { color: var(--subtext0); background: var(--surface0); }
 
   .bg-badge {
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.3px;
     padding: 2px 5px;
@@ -463,7 +467,7 @@
     flex-shrink: 0;
     margin-right: 4px;
     background: var(--surface0);
-    color: var(--surface2);
+    color: var(--subtext1);
     transition: all 0.15s;
   }
 
@@ -618,6 +622,24 @@
     background: var(--surface0);
     color: var(--overlay0);
   }
+
+  input, select { min-width: 0; }
+  button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .header { padding: 16px; }
+  .header-text h1 { font-size: 17px; }
+  .header-text span { font-size: 11px; line-height: 1.6; }
+  .header-icon { width: 34px; height: 34px; background: var(--surface0); }
+  .header-icon svg { width: 22px; height: 22px; stroke: var(--blue); }
+  .section-title, .hint-text, .option-hint { font-size: 11px; }
+  .toggle-label { gap: 10px; }
+  .toggle-label .icon { color: #fff; }
+  .engine-list { max-height: 200px; }
+  details > summary { cursor: pointer; font-weight: 600; padding: 8px 0; color: var(--text); }
+  details > .section { padding: 12px 0; }
+  .compact-note { font-size: 11px; color: var(--subtext0); line-height: 1.5; margin-top: 8px; }
+  .footer { padding: 12px 16px; display: flex; justify-content: space-between; color: var(--subtext0); font-size: 11px; }
+  .footer a { color: var(--blue); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
 <body>
@@ -629,7 +651,7 @@
     </div>
     <div class="header-text">
       <h1>BackgroundSearch</h1>
-      <span>v2.7.0</span>
+      <span>Keep reading. Search in the background.</span>
     </div>
   </div>
 
@@ -643,40 +665,17 @@
         <span>Force Background Tabs</span>
       </div>
       <label class="toggle-switch">
-        <input type="checkbox" id="bgTabsEnabled">
+        <input type="checkbox" id="bgTabsEnabled" aria-label="Force background tabs">
         <div class="toggle-track"></div>
         <div class="toggle-thumb"></div>
       </label>
-    </div>
-    <div class="option-row">
-      <span class="option-hint">Hold <strong>Shift</strong> to invert background/foreground</span>
     </div>
     <div class="toggle-row">
       <div class="toggle-label">
         <span>Context Menu Search</span>
       </div>
       <label class="toggle-switch">
-        <input type="checkbox" id="searchEnabled">
-        <div class="toggle-track"></div>
-        <div class="toggle-thumb"></div>
-      </label>
-    </div>
-    <div class="toggle-row">
-      <div class="toggle-label">
-        <span>Search All Engines</span>
-      </div>
-      <label class="toggle-switch">
-        <input type="checkbox" id="searchAll">
-        <div class="toggle-track"></div>
-        <div class="toggle-thumb"></div>
-      </label>
-    </div>
-    <div class="toggle-row">
-      <div class="toggle-label">
-        <span>Middle-Click Capture</span>
-      </div>
-      <label class="toggle-switch">
-        <input type="checkbox" id="middleClickCapture">
+        <input type="checkbox" id="searchEnabled" aria-label="Context menu search">
         <div class="toggle-track"></div>
         <div class="toggle-thumb"></div>
       </label>
@@ -686,7 +685,69 @@
         <span>Quick Menu on Selection</span>
       </div>
       <label class="toggle-switch">
-        <input type="checkbox" id="quickMenu">
+        <input type="checkbox" id="quickMenu" aria-label="Quick Menu on selection">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+  </div>
+  <div class="section" id="enginesSection">
+    <div class="section-title-row">
+      <span class="section-title">Search Engines</span>
+      <button class="reset-btn" id="resetEngines">&#8635; Reset</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn-sm" id="enableAll">Enable All</button>
+      <button class="btn-sm" id="disableAll">Disable All</button>
+      <button class="btn-sm" id="exportConfig">↑ Export</button>
+      <button class="btn-sm" id="importConfig">↓ Import</button>
+    </div>
+    <input type="file" id="importFile" accept=".json" style="display:none">
+    <div id="topEngines" class="top-engines" style="display:none"></div>
+    <div class="search-filter">
+      <input type="text" id="filterInput" aria-label="Filter search engines" placeholder="Filter engines...">
+    </div>
+    <p class="compact-note">BG keeps this page open. Click the badge to change where an engine opens.</p>
+    <div class="engine-list" id="engineList"></div>
+    <div style="display:flex;gap:6px;margin-top:6px">
+      <button class="add-engine-btn" id="toggleAddEngine" style="flex:1;margin-top:0">+ Add custom engine</button>
+      <button class="add-engine-btn" id="toggleOpenSearch" style="flex:1;margin-top:0">+ Import OpenSearch</button>
+    </div>
+    <div class="add-engine-form" id="addEngineForm">
+      <input type="text" id="newEngineName" aria-label="Custom engine name" placeholder="Engine name (e.g. Kagi)">
+      <input type="text" id="newEngineUrl" aria-label="Custom engine URL template" placeholder="https://example.com/search?q=%s">
+      <div style="display:flex;gap:4px;align-items:center">
+        <select id="newEngineMethod" aria-label="Request method" class="group-select" style="max-width:60px">
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+        </select>
+        <button class="btn-primary" id="addEngineBtn" style="flex:1">Add Engine</button>
+      </div>
+    </div>
+    <div class="add-engine-form" id="openSearchForm">
+      <input type="text" id="openSearchUrl" aria-label="OpenSearch descriptor URL" placeholder="https://example.com/opensearch.xml">
+      <button class="btn-primary" id="importOpenSearchBtn">Import</button>
+    </div>
+  </div>
+
+  <details class="section" id="advancedSettings">
+    <summary>Tab behavior, appearance and site rules</summary>
+    <div class="toggle-row">
+      <div class="toggle-label">
+        <span>Search All Engines</span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="searchAll" aria-label="Search all engines">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-label">
+        <span>Middle-Click Capture</span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="middleClickCapture" aria-label="Capture middle-click links">
         <div class="toggle-track"></div>
         <div class="toggle-thumb"></div>
       </label>
@@ -709,8 +770,6 @@
         <button class="seg-btn active" data-val="system">System</button>
       </div>
     </div>
-  </div>
-
   <div class="section">
     <div class="section-title-row">
       <span class="section-title">Per-Site Rules</span>
@@ -718,15 +777,15 @@
     <div id="siteRuleList"></div>
     <div class="add-engine-form open" id="addSiteRuleForm" style="display:flex">
       <div style="display:flex;gap:4px;width:100%">
-        <input type="text" id="newRulePattern" placeholder="e.g. *.example.com" style="flex:1">
-        <select id="newRuleType" class="group-select" style="max-width:60px">
+        <input type="text" id="newRulePattern" aria-label="Site hostname pattern" placeholder="e.g. *.example.com" style="flex:1">
+        <select id="newRuleType" aria-label="Pattern type" class="group-select" style="max-width:60px">
           <option value="glob">Glob</option>
           <option value="exact">Exact</option>
           <option value="regex">Regex</option>
         </select>
       </div>
       <div style="display:flex;gap:4px;width:100%">
-        <select id="newRuleAction" class="group-select" style="max-width:none;flex:1">
+        <select id="newRuleAction" aria-label="Site tab behavior" class="group-select" style="max-width:none;flex:1">
           <option value="fg">Always Foreground</option>
           <option value="bg">Always Background</option>
           <option value="default">Inherit Default</option>
@@ -743,50 +802,14 @@
     </div>
     <div id="groupList"></div>
     <div class="group-add-row">
-      <input type="text" id="newGroupName" placeholder="New group name (e.g. Dev)">
+      <input type="text" id="newGroupName" aria-label="New engine group name" placeholder="New group name (e.g. Dev)">
       <button id="addGroupBtn">Add</button>
     </div>
     <div class="hint-text">Groups create sub-menus in the right-click menu. Assign engines to groups using the dropdown on each engine row.</div>
   </div>
 
-  <div class="section" id="enginesSection">
-    <div class="section-title-row">
-      <span class="section-title">Search Engines</span>
-      <button class="reset-btn" id="resetEngines">&#8635; Reset</button>
-    </div>
-    <div class="btn-row">
-      <button class="btn-sm" id="enableAll">Enable All</button>
-      <button class="btn-sm" id="disableAll">Disable All</button>
-      <button class="btn-sm" id="exportConfig">↑ Export</button>
-      <button class="btn-sm" id="importConfig">↓ Import</button>
-    </div>
-    <input type="file" id="importFile" accept=".json" style="display:none">
-    <div id="topEngines" class="top-engines" style="display:none"></div>
-    <div class="search-filter">
-      <input type="text" id="filterInput" placeholder="Filter engines...">
-    </div>
-    <div class="engine-list" id="engineList"></div>
-    <div style="display:flex;gap:6px;margin-top:6px">
-      <button class="add-engine-btn" id="toggleAddEngine" style="flex:1;margin-top:0">+ Add custom engine</button>
-      <button class="add-engine-btn" id="toggleOpenSearch" style="flex:1;margin-top:0">+ Import OpenSearch</button>
-    </div>
-    <div class="add-engine-form" id="addEngineForm">
-      <input type="text" id="newEngineName" placeholder="Engine name (e.g. Kagi)">
-      <input type="text" id="newEngineUrl" placeholder="https://example.com/search?q=%s">
-      <div style="display:flex;gap:4px;align-items:center">
-        <select id="newEngineMethod" class="group-select" style="max-width:60px">
-          <option value="GET">GET</option>
-          <option value="POST">POST</option>
-        </select>
-        <button class="btn-primary" id="addEngineBtn" style="flex:1">Add Engine</button>
-      </div>
-    </div>
-    <div class="add-engine-form" id="openSearchForm">
-      <input type="text" id="openSearchUrl" placeholder="https://example.com/opensearch.xml">
-      <button class="btn-primary" id="importOpenSearchBtn">Import</button>
-    </div>
-  </div>
-
+  </details>
+  <div class="footer"><span>v2.7.1</span><a href="privacy.html" target="_blank">Privacy</a><a href="INSTALL.html" target="_blank">Setup guide</a></div>
   <script src="popup.js"></script>
 </body>
 </html>

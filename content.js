@@ -7,6 +7,7 @@
   let shiftHeld = false;
   let shiftTrackingStarted = false;
   let middleClickCaptureStarted = false;
+  let middleClickEnabled = false;
 
   function startShiftTracking() {
     if (shiftTrackingStarted) return;
@@ -39,10 +40,11 @@
     middleClickCaptureStarted = true;
 
     document.addEventListener("auxclick", (e) => {
-      if (e.button !== 1) return;
+      if (!middleClickEnabled || e.button !== 1) return;
       let link = e.target;
       while (link && link.tagName !== "A") link = link.parentElement;
       if (!link || !link.href) return;
+      try { if (!['http:', 'https:'].includes(new URL(link.href).protocol)) return; } catch { return; }
       e.preventDefault();
       e.stopPropagation();
       api.runtime.sendMessage({ type: "openTab", url: link.href }).catch(() => {});
@@ -51,14 +53,18 @@
 
   async function init() {
     const data = await api.storage.sync.get({ bgTabsEnabled: true, middleClickCapture: false });
-    if (data.bgTabsEnabled) startShiftTracking();
-    if (data.middleClickCapture) startMiddleClickCapture();
+    startShiftTracking();
+    middleClickEnabled = data.middleClickCapture;
+    if (middleClickEnabled) startMiddleClickCapture();
   }
 
   api.storage.onChanged.addListener((changes, areaName) => {
     if (areaName && areaName !== "sync") return;
     if (changes.bgTabsEnabled?.newValue && !shiftHeld) startShiftTracking();
-    if (changes.middleClickCapture?.newValue) startMiddleClickCapture();
+    if (changes.middleClickCapture) {
+      middleClickEnabled = changes.middleClickCapture.newValue === true;
+      if (middleClickEnabled) startMiddleClickCapture();
+    }
   });
 
   init().catch(() => {});
