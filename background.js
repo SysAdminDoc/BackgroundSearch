@@ -50,6 +50,8 @@ const DEFAULTS = {
 let settings = { ...DEFAULTS };
 const lastActiveTabs = new Map();
 let recentlyCreatedTabs = new Set();
+// Tabs this extension is bringing to the front on purpose (foreground engines).
+const selfActivatedTabs = new Set();
 let shiftHeld = false;
 let bgTabCount = 0;
 
@@ -118,7 +120,19 @@ function shouldForceBackground(url) {
   return settings.bgTabsEnabled !== shiftHeld;
 }
 
+// The browser's own New Tab page (the + button, Ctrl+T) is a tab the user asked to look at.
+const NEW_TAB_PAGE = /^(?:(?:chrome|edge|brave|opera|vivaldi):\/\/(?:newtab|new-tab-page|new-tab-page-third-party|startpage|startpageshared|vivaldi-webui\/startpage)(?=[/?#]|$)|chrome-search:\/\/local-ntp\/|about:(?:newtab|home|privatebrowsing)(?=[?#]|$))/i;
+
+function isNewTabPage(url) {
+  return typeof url === "string" && NEW_TAB_PAGE.test(url);
+}
+
+function shouldPushTabBack(url) {
+  return !isNewTabPage(url) && shouldForceBackground(url);
+}
+
 api.tabs.onActivated.addListener((activeInfo) => {
+  if (selfActivatedTabs.delete(activeInfo.tabId)) recentlyCreatedTabs.delete(activeInfo.tabId);
   if (recentlyCreatedTabs.has(activeInfo.tabId)) {
     recentlyCreatedTabs.delete(activeInfo.tabId);
     const previous = lastActiveTabs.get(activeInfo.windowId);
@@ -133,7 +147,7 @@ api.tabs.onActivated.addListener((activeInfo) => {
       }
     };
     api.tabs.get(activeInfo.tabId).then((tab) => {
-      if (shouldForceBackground(tab?.pendingUrl || tab?.url)) switchBack();
+      if (shouldPushTabBack(tab?.pendingUrl || tab?.url)) switchBack();
     }).catch(() => {
       if (shouldForceBackground(null)) switchBack();
     });
@@ -142,9 +156,11 @@ api.tabs.onActivated.addListener((activeInfo) => {
   }
 });
 
+// Firefox reports a link's new tab as inactive here and selects it a moment later, so tag it either
+// way. A tab that isn't selected within the window was opened in the background and is left alone.
 api.tabs.onCreated.addListener((tab) => {
   const url = tab.pendingUrl || tab.url;
-  if (shouldForceBackground(url) && tab.active) {
+  if (shouldPushTabBack(url)) {
     recentlyCreatedTabs.add(tab.id);
     setTimeout(() => recentlyCreatedTabs.delete(tab.id), 500);
   }
@@ -349,7 +365,11 @@ async function searchWithEngine(engine, text, tab) {
 async function createResultTab(options) {
   // Create inactive first so the general new-tab rule cannot override an explicit foreground choice.
   const created = await api.tabs.create({ ...options, active: false });
-  if (options.active) await api.tabs.update(created.id, { active: true });
+  if (options.active) {
+    selfActivatedTabs.add(created.id);
+    setTimeout(() => selfActivatedTabs.delete(created.id), 500);
+    await api.tabs.update(created.id, { active: true });
+  }
   return created;
 }
 

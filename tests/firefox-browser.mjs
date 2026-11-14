@@ -9,7 +9,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(root, 'test-results', `firefox-${Date.now()}`);
 fs.mkdirSync(output, { recursive: true });
 const report = { version: '2.7.1', isolatedHeadless: true, checks: [], blocked: [] };
-const proxy = http.createServer((req, res) => { res.writeHead(200, {'Content-Type':'text/html'}); res.end('<!doctype html><title>Local Firefox fixture</title><p id="selection">CSS grid layout</p>'); });
+const proxy = http.createServer((req, res) => { res.writeHead(200, {'Content-Type':'text/html'}); res.end('<!doctype html><title>Local Firefox fixture</title><p id="selection">CSS grid layout</p><a id="link" target="_blank" href="/next">Read the next page</a>'); });
 proxy.on('connect', (req, socket) => { report.blocked.push(req.url); socket.on('error', error => { if (error.code !== 'ECONNRESET') report.proxyError = error.message; }); socket.end('HTTP/1.1 502 Bad Gateway\r\n\r\n'); });
 let driver;
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -61,6 +61,33 @@ try {
   const rejected = await driver.evaluate(null, () => browser.runtime.sendMessage({type:'panelSearch',engineId:'google',text:'must not search'}));
   assert.equal(rejected.ok, false);
   report.checks.push('Disabled providers are rejected by the Firefox background');
+
+  const inChrome = async (script, args) => {
+    await driver.setContext('chrome');
+    try { return await driver.executeSync(`const w=Services.wm.getMostRecentWindow('navigator:browser');${script}`, args); }
+    finally { await driver.setContext('content'); }
+  };
+  const selectedUrl = () => inChrome('return w.gBrowser.selectedBrowser.currentURI.spec;');
+  await inChrome("Services.prefs.setBoolPref('dom.security.https_first', false);");
+  await driver.openExtensionPage('http://fixture.test/');
+  // The driver opens this tab in front, which the extension sends to the background; select it as a reader would.
+  await delay(700);
+  await inChrome("w.gBrowser.selectedTab = w.gBrowser.tabs.find(tab => tab.linkedBrowser.currentURI.spec === arguments[0]);", ['http://fixture.test/']);
+  assert.equal(await selectedUrl(), 'http://fixture.test/');
+  const link = await driver.request('POST', '/element', { using: 'css selector', value: '#link' });
+  await driver.request('POST', `/element/${Object.values(link)[0]}/click`, {});
+  for (let i = 0; i < 50 && !(await inChrome('return w.gBrowser.tabs.some(tab => tab.linkedBrowser.currentURI.spec === arguments[0]);', ['http://fixture.test/next'])); i++) await delay(100);
+  await delay(700);
+  report.linkTabs = await inChrome('return w.gBrowser.tabs.map(tab => ({ url: tab.linkedBrowser.currentURI.spec, selected: tab.selected }));');
+  assert.ok(report.linkTabs.some(tab => tab.url === 'http://fixture.test/next'), 'The link did not open its tab');
+  assert.equal(await selectedUrl(), 'http://fixture.test/', 'A link opened in its own tab took focus from the reading page');
+  report.checks.push('A link that opens its own tab stays behind the reading page in Firefox');
+  // The same command the tab strip's + button and Ctrl+T run.
+  await inChrome('if (w.BrowserCommands?.openTab) w.BrowserCommands.openTab(); else w.BrowserOpenTab();');
+  await delay(1200);
+  report.newTabUrl = await selectedUrl();
+  assert.match(report.newTabUrl, /^about:(newtab|home)$/, 'The + button tab was pushed into the background');
+  report.checks.push('A tab opened with the + button keeps focus in Firefox');
 } catch (error) {
   report.failure = error.stack;
   process.exitCode = 1;

@@ -133,6 +133,22 @@ async function screenshot(page, name) { await delay(300); await page.screenshot(
   });
   assert.equal(intercepted, false);
   passed('Turning off middle-click capture restores native link handling on an already-open page');
+
+  const activeTabUrl = () => worker.evaluate(async () => (await chrome.tabs.query({})).filter(tab => tab.active).map(tab => tab.url || tab.pendingUrl).join(' '));
+  await page.bringToFront();
+  await page.locator('#new-tab').click();
+  await waitFor(() => worker.evaluate(async url => (await chrome.tabs.query({})).some(tab => (tab.url || tab.pendingUrl) === url), origin + '/next'), 'Link did not open its tab');
+  await delay(500);
+  assert.equal(await activeTabUrl(), origin + '/', 'A link opened in its own tab took focus from the reading page');
+  passed('A link that opens its own tab stays behind the reading page');
+  const browserSession = await context.browser().newBrowserCDPSession();
+  await browserSession.send('Target.createTarget', { url: 'chrome://newtab/' });
+  await waitFor(async () => /^chrome:\/\/(newtab|new-tab-page)\//.test(await activeTabUrl()), 'New Tab page never became the active tab');
+  await delay(500);
+  assert.match(await activeTabUrl(), /^chrome:\/\/(newtab|new-tab-page)\/$/, 'The New Tab page was pushed into the background');
+  passed('A New Tab page the browser opens keeps focus');
+  for (const extra of context.pages()) if (/^chrome:\/\/(newtab|new-tab-page)\/|\/next$/.test(extra.url())) await extra.close();
+  await browserSession.detach();
   await worker.evaluate(() => loadSettings());
   assert.equal(await worker.evaluate(() => parseBang('!yt tabs').engine.id), 'youtube');
   assert.equal(await worker.evaluate(() => parseBang('!gh tabs').engine.id), 'github');
