@@ -12,7 +12,7 @@
   <sub><em>If this project helps you, a coffee helps me keep working on it.</em></sub>
 </p>
 
-## Look it up. Keep your place.
+## What it does
 
 <img src="icon.png" width="224" align="right" alt="BackgroundSearch blue browser and magnifying-glass artwork">
 
@@ -22,15 +22,15 @@ BackgroundSearch opens search results behind the page you're reading. Select tex
 
 ![Quick Menu beside selected text on a local demonstration page](assets/screenshots/quick-menu.png)
 
-*The page is a local demonstration fixture. The floating menu is the installed extension, not a mockup.*
+*Quick Menu from the installed extension, shown on a local demo page.*
 
-## Search the way you work
+## Features
 
 Start with Google or choose from 29 presets, including DuckDuckGo, GitHub, YouTube, MDN and Kagi. Only enabled engines appear in search menus.
 
-- **Select once, search elsewhere.** The optional Quick Menu puts your chosen engines beside selected text. Results use each engine's background, foreground or new-window setting.
+- The optional Quick Menu puts your chosen engines beside selected text. Results use each engine's background, foreground or new-window setting.
 - Put several engines in a named right-click submenu. Search All opens results for every enabled engine and groups the result tabs in Chrome.
-- **Keep useful exceptions.** Set a hostname rule for a site that should always open a foreground tab. Exact names, wildcards and regular expressions are supported.
+- Set a hostname rule for a site that should always open a foreground tab. Rules can be exact names, wildcards or regular expressions.
 - Add your own GET or POST engine, import a compatible OpenSearch descriptor, or back up the entire configuration to JSON.
 
 ![BackgroundSearch settings with engine choices and tab controls](assets/screenshots/settings-dark.png)
@@ -69,9 +69,9 @@ The separate Firefox package requires **Firefox 142 or newer**. Extract it, open
 | Look up a query while keeping a page visible | Chrome's side panel, with BackgroundSearch selected |
 | Back up settings or restore them | Export and Import in Search Engines |
 
-With YouTube enabled, `bs !yt browser tabs` chooses YouTube. `bs !gh browser tabs` chooses GitHub when enabled. Engine-name prefixes also work. Hold Shift on a normal web page to invert the default foreground/background behavior; an explicit site rule takes priority.
+With YouTube enabled, `bs !yt browser tabs` chooses YouTube. `bs !gh browser tabs` chooses GitHub when enabled. Engine-name prefixes also work. Hold Shift on a normal web page to invert the default foreground/background behavior. An explicit site rule still wins.
 
-The background-tab toggle is on initially. Context-menu search is on with Google selected. Quick Menu, Search All and middle-click capture start off.
+A New Tab page you open with the + button or Ctrl+T always stays in front. The background-tab toggle is on initially. Context-menu search is on with Google selected. Quick Menu, Search All and middle-click capture start off.
 
 ![BackgroundSearch side panel with local search history](assets/screenshots/sidepanel.png)
 
@@ -89,7 +89,7 @@ The extension requests tab access for tab placement and page templates, page acc
 
 ## Build and check locally
 
-The extension has no runtime package dependencies. Python 3.11 or newer builds the installable ZIPs; Node.js 22 or newer runs the runtime checks.
+The extension has no runtime package dependencies. Python 3.11 or newer builds the installable ZIPs, and Node.js 22 or newer runs the runtime checks.
 
 ```text
 python -B -m unittest discover -s tests -p test_build.py
@@ -103,4 +103,4 @@ The builder validates both manifests, safely replaces its own `dist` directory a
 
 [Report a problem](https://github.com/SysAdminDoc/BackgroundSearch/issues) with your browser version and the steps that reproduce it. Remove private URLs and search terms before sharing a configuration file.
 
-The [concept archive](assets/concepts/README.md) preserves the original artwork, source snapshot and screenshot review attempts. The existing blue search identity is retained. MIT licensed; see [LICENSE](LICENSE).
+The [concept archive](assets/concepts/README.md) holds the original artwork, a source snapshot and earlier screenshot attempts. Released under the MIT license (see [LICENSE](LICENSE)).

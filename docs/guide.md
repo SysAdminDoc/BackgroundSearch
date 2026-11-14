@@ -12,7 +12,7 @@ Quick Menu displays at most 12 enabled engines. Search All uses every enabled en
 
 ## Page-aware and POST engines
 
-Use **Add custom engine** and give it a name and an HTTP or HTTPS URL containing `%s`. Prefer HTTPS for remote providers. The optional request-method selector supports POST; the default form body is `q=%s`.
+Use **Add custom engine** and give it a name and an HTTP or HTTPS URL containing `%s`. Prefer HTTPS for remote providers. The optional request-method selector supports POST, with a default form body of `q=%s`.
 
 | Placeholder | Value sent to the selected engine |
 | --- | --- |
@@ -25,13 +25,15 @@ Values are URL-encoded. For example, `https://example.org/search?q=%s&site=%host
 
 For a custom POST body, export the settings, add a `postParams` string to the relevant custom engine, then import the JSON. Keep its existing ID. A body such as `query=%s&source=%host` sends two fields. The URL editor still requires `%s` in the URL template, including for POST engines.
 
-OpenSearch import supports HTTP(S) descriptors with a GET `Url` of type `text/html` and a `{searchTerms}` placeholder. Descriptors with separate `Param` elements or POST methods need manual setup. A site must allow the extension's cross-origin request; import doesn't bypass that restriction.
+OpenSearch import supports HTTP(S) descriptors with a GET `Url` of type `text/html` and a `{searchTerms}` placeholder. Descriptors with separate `Param` elements or POST methods need manual setup. The site has to allow the extension's cross-origin request, and import can't get around that.
 
 ## Tab rules
 
-Rules match the destination hostname. `example.org` matches exactly; `*.example.org` matches subdomains, not the bare domain. A wildcard `*` matches any number of characters and `?` matches one. Regex rules are limited to 256 characters; use simple anchored expressions.
+Rules match the destination hostname. `example.org` matches exactly. `*.example.org` matches subdomains but not the bare domain. A wildcard `*` matches any number of characters and `?` matches one. Regex rules are limited to 256 characters, so keep them to simple anchored expressions.
 
 The first matching rule wins. An explicit foreground or background rule takes priority over the global toggle and Shift. The default action falls back to the global toggle and current Shift state.
+
+A New Tab page you open yourself with the browser's + button or Ctrl+T always stays in front. Other tabs that try to open in front, like a link that opens its own tab, still follow the background setting.
 
 ## Feature limits
 
@@ -40,7 +42,7 @@ The first matching rule wins. An explicit foreground or background rule takes pr
 - Clipboard search requires permission and a page where the browser permits clipboard access. It reads only after you request it. If the browser blocks it, select text on the page instead.
 - Reverse-image search sends a publicly reachable image URL. A provider usually can't fetch an image behind your login or a local file URL.
 - Firefox uses an unsigned temporary installation. It has no Chrome side panel or automatic tab groups. No permanent signed Firefox package is included.
-- Browser sync has quotas. If saving fails, the popup restores saved settings and shows an error. A local-only fallback isn't claimed. Export a backup before reducing a large set of custom engines or rules.
+- Browser sync has quotas. If saving fails, the popup restores saved settings and shows an error. There's no local-only fallback. Export a backup before reducing a large set of custom engines or rules.
 - Site permissions, browser policy or other extensions can affect tab activation. A new-window engine opens a separate browser window.
 
 ## Build and verification
@@ -49,6 +51,6 @@ Run `python -B build_extension.py` for separate Chrome and Firefox packages. It 
 
 For the installed Chromium checks, run `npm ci`, `npx playwright install chromium`, then `npm run test:browser`. That lane uses a fresh owned profile with `--headless=new`, blocks outside traffic through a local proxy and preserves screenshots under ignored `test-results/`. It doesn't use your personal browser or clipboard. Provider destinations are verified against browser tab URLs, not live search results.
 
-The optional secondary CRX is built with `node tools/package-crx.mjs`. Keep `BackgroundSearch-selfhost.pem` private and stable. Restore it from your private backup for later releases. `--create-key` is only for the first self-hosted package; replacing a key changes that CRX identity.
+The optional secondary CRX is built with `node tools/package-crx.mjs`. Keep `BackgroundSearch-selfhost.pem` private and stable. Restore it from your private backup for later releases. `--create-key` is only for the first self-hosted package. Replacing the key changes the CRX identity.
 
 See [verification notes](verification.md) for the tested browsers and remaining external checks.
